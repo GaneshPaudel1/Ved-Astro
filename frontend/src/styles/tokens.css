@@ -1,0 +1,174 @@
+/*
+  Design tokens.
+
+  The palette is a deep ink ground with a single warm accent — the colour of
+  turmeric and old manuscript paper — rather than the violet gradient that
+  astrology apps default to. Depth comes from layered surfaces and hairline
+  rules, not from glow. The chart is the only place saturated colour is spent.
+*/
+
+:root {
+  /* ---- ground and surfaces (dark is the primary design) ---- */
+  --ink-900: #0b0e14;
+  --ink-850: #10141c;
+  --ink-800: #151a24;
+  --ink-750: #1b212d;
+  --ink-700: #232a38;
+  --ink-600: #2f3849;
+  --ink-500: #414d63;
+
+  --bg: var(--ink-900);
+  --surface: var(--ink-850);
+  --surface-raised: var(--ink-800);
+  --surface-sunken: #080a0f;
+  --line: #232a38;
+  --line-strong: #33405a;
+
+  /* ---- text ---- */
+  --text: #e8e6e1;
+  --text-muted: #9aa3b2;
+  --text-dim: #6b7686;
+  --text-inverse: #0b0e14;
+
+  /* ---- accent: turmeric / saffron, used sparingly ---- */
+  --accent: #e0a33e;
+  --accent-bright: #f2bc5c;
+  --accent-dim: #8a6524;
+  --accent-wash: rgba(224, 163, 62, 0.12);
+  --accent-line: rgba(224, 163, 62, 0.32);
+
+  /* ---- semantic ---- */
+  --benefic: #6fb99a;
+  --malefic: #d4736a;
+  --retro: #b98fd6;
+  --exalted: #7fc7a8;
+  --debilitated: #cf7d72;
+  --combust: #d99a5b;
+
+  --positive: #6fb99a;
+  --caution: #d9a45b;
+  --negative: #d4736a;
+  --info: #7fa6d4;
+
+  /* ---- chart ink ---- */
+  --chart-bg: #0e121a;
+  --chart-line: #3a4459;
+  --chart-line-strong: #55627d;
+  --chart-label: #7d8798;
+  --chart-highlight: var(--accent);
+
+  /* ---- type ---- */
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-deva: 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', serif;
+
+  /* ---- spacing scale ---- */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+  --s7: 3rem;
+  --s8: 4rem;
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
+
+  --maxw: 1400px;
+  --focus-ring: 2px solid var(--accent-bright);
+}
+
+/*
+  Light theme. Not an inversion — the ground becomes warm paper and the
+  chart is drawn in ink, which is how a kundli is actually printed.
+*/
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f5f2ea;
+    --surface: #fffdf8;
+    --surface-raised: #ffffff;
+    --surface-sunken: #ebe6da;
+    --line: #ddd6c6;
+    --line-strong: #c4b9a2;
+
+    --text: #1d1a14;
+    --text-muted: #5d574a;
+    --text-dim: #8a8272;
+    --text-inverse: #fffdf8;
+
+    --accent: #9a6a12;
+    --accent-bright: #b8811d;
+    --accent-dim: #d8bd85;
+    --accent-wash: rgba(154, 106, 18, 0.1);
+    --accent-line: rgba(154, 106, 18, 0.28);
+
+    --benefic: #2f7a5c;
+    --malefic: #a83e33;
+    --retro: #6f4a94;
+    --exalted: #2f7a5c;
+    --debilitated: #a83e33;
+    --combust: #9a6212;
+
+    --positive: #2f7a5c;
+    --caution: #9a6212;
+    --negative: #a83e33;
+    --info: #2f5f96;
+
+    --chart-bg: #fffdf8;
+    --chart-line: #b3a88f;
+    --chart-line-strong: #6f6553;
+    --chart-label: #6f6553;
+
+    --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.1);
+    --shadow: 0 4px 16px rgba(60, 50, 30, 0.1);
+    --shadow-lg: 0 12px 40px rgba(60, 50, 30, 0.14);
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-raised: #ffffff;
+  --surface-sunken: #ebe6da;
+  --line: #ddd6c6;
+  --line-strong: #c4b9a2;
+
+  --text: #1d1a14;
+  --text-muted: #5d574a;
+  --text-dim: #8a8272;
+  --text-inverse: #fffdf8;
+
+  --accent: #9a6a12;
+  --accent-bright: #b8811d;
+  --accent-dim: #d8bd85;
+  --accent-wash: rgba(154, 106, 18, 0.1);
+  --accent-line: rgba(154, 106, 18, 0.28);
+
+  --benefic: #2f7a5c;
+  --malefic: #a83e33;
+  --retro: #6f4a94;
+  --exalted: #2f7a5c;
+  --debilitated: #a83e33;
+  --combust: #9a6212;
+
+  --positive: #2f7a5c;
+  --caution: #9a6212;
+  --negative: #a83e33;
+  --info: #2f5f96;
+
+  --chart-bg: #fffdf8;
+  --chart-line: #b3a88f;
+  --chart-line-strong: #6f6553;
+  --chart-label: #6f6553;
+
+  --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.1);
+  --shadow: 0 4px 16px rgba(60, 50, 30, 0.1);
+  --shadow-lg: 0 12px 40px rgba(60, 50, 30, 0.14);
+}

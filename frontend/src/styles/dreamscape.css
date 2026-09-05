@@ -1,0 +1,39 @@
+.immersive .cosmic-hero { max-width:none; min-height:clamp(710px,calc(100svh - 84px),980px); display:flex; align-items:center; padding:65px max(5vw,24px) 105px; isolation:isolate; overflow:hidden; background:#090c18; }
+.dreamscape { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.dreamscape__parallax { position:absolute; inset:-20px; transform:translate3d(var(--dream-x,0px),var(--dream-y,0px),0); }
+.dreamscape__art { width:100%; height:100%; object-fit:cover; object-position:72% 48%; display:block; animation:dream-breathe 38s ease-in-out infinite alternate; }
+.dreamscape canvas { position:absolute; width:100%; height:100%; inset:0; }
+.dreamscape__veil { position:absolute; inset:0; background:radial-gradient(ellipse at 74% 35%,#ebae7b17,transparent 45%); mix-blend-mode:screen; animation:veil-shimmer 15s ease-in-out infinite alternate; }
+.dreamscape__mist { position:absolute; inset:20% -10% -35%; background:radial-gradient(ellipse at 70% 70%,#d8a7d624,transparent 45%),radial-gradient(ellipse at 40% 80%,#b5a5ed22,transparent 55%); filter:blur(38px); mix-blend-mode:screen; animation:mist-drift 26s ease-in-out infinite alternate; }
+.dreamscape__shade { position:absolute; inset:0; background:linear-gradient(90deg,#080b16b3,transparent 58%),linear-gradient(0deg,#090917 0%,#09091700 21%,transparent 85%,#09091733); }
+@keyframes dream-breathe { from { transform:scale(1.025); } to { transform:scale(1.085) translate3d(-.6%,-.5%,0); } }
+@keyframes mist-drift { to { transform:translate3d(6%,-8%,0) scale(1.15); opacity:.45; } }
+@keyframes veil-shimmer { to { opacity:.25; } }
+.immersive .cosmic-hero__copy { width:50%; max-width:640px; padding:0 0 30px; color:#f4eefb; text-shadow:0 2px 26px #06091466; }
+.immersive .cosmic-hero h1 { font-size:clamp(3.4rem,5.2vw,6rem); line-height:1.08; }
+.immersive .cosmic-hero h1 em { background:linear-gradient(100deg,#eed9ef,#d4b5e6 65%,#e8c1a8); background-clip:text; -webkit-background-clip:text; }
+.immersive .cosmic-hero__intro { color:#c9c5d6; max-width:370px; line-height:1.85; }
+.immersive .cosmic-hero .eyebrow { color:#e3c7ac; }
+.immersive .cosmic-hero__tags,.immersive .cosmic-hero__note { color:#c9bdd2; }
+.immersive .scene-controls { position:absolute; bottom:43px; right:5vw; margin:0; z-index:2; color:#cfc0db; }
+.immersive .scene-controls > span { color:#d1c0d3; font-size:.49rem; }
+.immersive .scene-controls .motion-toggle { color:#eee3ef; background:#1713268c; border-color:#e0bed245; backdrop-filter:blur(10px); }
+.immersive .hero-bottom { bottom:47px; left:5vw; right:auto; }.immersive .hero-bottom span:last-child { display:none; }
+.immersive .chart-library { border-top:0; }.immersive .library-empty { background:linear-gradient(90deg,var(--surface) 25%,color-mix(in srgb,var(--surface) 82%,transparent)),url('/art/celestial-dreamscape-v1.png') 75% 60% / cover; }
+.immersive .saved-chart { background:linear-gradient(120deg,color-mix(in srgb,var(--surface) 92%,transparent),color-mix(in srgb,var(--surface) 83%,transparent)),url('/art/celestial-dreamscape-v1.png') 75% 50% / cover; }
+.immersive.motion-paused .dreamscape__art,.immersive.motion-paused .dreamscape__veil,.immersive.motion-paused .dreamscape__mist { animation-play-state:paused; }
+:root[data-theme='light'] .immersive .cosmic-hero h1 em { background:linear-gradient(100deg,#eed9ef,#d4b5e6 65%,#e8c1a8); background-clip:text; -webkit-background-clip:text; }
+:root[data-theme='light'] .immersive .cosmic-hero .eyebrow { color:#e3c7ac; }
+@media(max-width:1023px) { .immersive .cosmic-hero { min-height:730px; }.immersive .cosmic-hero__copy { width:58%; }.immersive .cosmic-hero h1 { font-size:clamp(3rem,5.5vw,4.7rem); }.dreamscape__shade { background:linear-gradient(90deg,#080b16cb,transparent 90%),linear-gradient(0deg,#090917,transparent 25%); } }
+@media(max-width:640px) {
+ .immersive .cosmic-hero { min-height:920px; padding:52px 22px 100px; align-items:flex-start; }
+ .immersive .cosmic-hero__copy { width:100%; max-width:none; padding:0; }
+ .immersive .cosmic-hero h1 { font-size:clamp(2.7rem,10.5vw,4rem); }
+ .immersive .cosmic-hero__intro { max-width:310px; font-size:.84rem; }
+ .dreamscape__parallax { inset:260px 0 0; }
+ .dreamscape__art { object-position:75% 50%; }
+ .dreamscape__shade { background:linear-gradient(180deg,#090c18 0%,#090c18 19%,#090c18c9 32%,transparent 55%,#090917 100%); }
+ .immersive .scene-controls { right:22px; bottom:42px; }.immersive .hero-bottom { left:22px; bottom:46px; }
+ .dreamscape__mist { inset:40% -10% -10%; }
+}
+@media(prefers-reduced-motion:reduce) { .dreamscape__art,.dreamscape__veil,.dreamscape__mist { animation:none; }.dreamscape__parallax { transform:none; } }

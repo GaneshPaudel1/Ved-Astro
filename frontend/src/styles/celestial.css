@@ -1,0 +1,108 @@
+:root { color-scheme: dark; --bg:#0e0c1b; --surface:#171326; --surface-raised:#211a35; --surface-sunken:#100d1e; --line:#332944; --line-strong:#594369; --text:#f4eefb; --text-muted:#b9adc9; --text-dim:#a296b4; --accent:#edbc7c; --accent-bright:#ffdaa6; --accent-wash:#edbc7c12; --accent-line:#edbc7c55; --chart-bg:#151023; --chart-line:#695079; --chart-line-strong:#b58bba; --chart-label:#b9a7ce; --radius:11px; --radius-lg:20px; --maxw:1536px; --celestial-orchid:#d5a9fa; }
+:root[data-theme='light'] { color-scheme:light; --bg:#f6f0fa; --surface:#fffbff; --surface-raised:#f0e6f8; --surface-sunken:#f8f2fc; --line:#e0d1e9; --line-strong:#bda2ce; --text:#30203f; --text-muted:#6f5a80; --text-dim:#7e648e; --accent:#94511d; --accent-bright:#824017; --accent-wash:#b4772510; --accent-line:#ad702b55; --chart-bg:#fcf8ff; --chart-line:#b8a0cc; --chart-line-strong:#836195; --chart-label:#785989; --celestial-orchid:#854bb0; }
+body { background-image:radial-gradient(ellipse at 85% 7%,#8451d114,transparent 40%),radial-gradient(ellipse at 4% 40%,#c4597910,transparent 35%); }
+.topbar { background:color-mix(in srgb,var(--bg) 84%,transparent); }
+.topbar__inner { min-height:82px; }
+.brand__mark { width:36px; height:36px; transform:rotate(45deg); padding:4px; border:1px solid var(--accent-line); }
+.brand__name { font-size:1.75rem; }
+.brand__sub { font-size:.58rem; letter-spacing:.2em; margin-top:6px; }
+.topbar__tag { font-size:.8rem; color:var(--text-muted); margin-right:20px; }
+.topbar .btn { border:1px solid var(--line); border-radius:50%; width:40px; height:40px; font-size:1.15rem; padding:0; }
+.cosmic-hero { display:grid; grid-template-columns:1.25fr 1fr; align-items:center; gap:28px; padding-block:28px 35px; position:relative; }
+.cosmic-hero::before { content:''; position:absolute; inset:0; pointer-events:none; opacity:.45; background-image:radial-gradient(circle at 12% 18%,#c5a8ef 1px,transparent 1.5px),radial-gradient(circle at 53% 75%,#c5a8ef 1px,transparent 1.5px),radial-gradient(circle at 38% 15%,#edbc7c 1px,transparent 1.5px); background-size:240px 190px,310px 260px,360px 310px; }
+.cosmic-hero__copy { position:relative; padding-left:28px; }
+.cosmic-hero .eyebrow { color:var(--accent); letter-spacing:.2em; font-size:.66rem; margin-bottom:23px; }
+.live-star { display:inline-block; margin-right:8px; font-size:1rem; }
+.cosmic-hero h1 { font-size:clamp(2.5rem,4.2vw,4.6rem); font-weight:400; line-height:1.12; letter-spacing:-.045em; }
+.cosmic-hero h1 em { font-weight:400; color:var(--celestial-orchid); }
+.cosmic-hero__intro { color:var(--text-muted); max-width:430px; line-height:1.8; margin:23px 0 25px; font-size:.95rem; }
+.btn--primary { background:linear-gradient(115deg,#f3ca8c,#e6a477); border-color:#f6c895; color:#302037; box-shadow:0 5px 24px #edbc7c16; }
+.btn--primary:hover:not(:disabled) { background:linear-gradient(115deg,#ffe0b0,#f2b88f); color:#302037; transform:translateY(-2px); box-shadow:0 7px 28px #edbc7c30; }
+.btn { transition:background .2s,transform .2s,box-shadow .2s; }
+.cosmic-cta { padding:13px 21px; font-size:.85rem; }
+.cosmic-cta span { margin-left:18px; }
+.cosmic-hero__note { color:var(--text-dim); font-size:.75rem; margin-left:13px; }
+.cosmic-hero__tags { display:flex; gap:25px; color:var(--text-dim); font-size:.73rem; margin-top:29px; letter-spacing:.025em; }
+.celestial-art { position:relative; max-width:440px; width:100%; justify-self:center; }
+.celestial-art svg { display:block; width:100%; filter:drop-shadow(0 0 18px #ac6ce828); }
+.zodiac-orbit { transform-origin:220px 220px; animation:celestial-turn 180s linear infinite; }
+.inner-orbit { transform-origin:220px 220px; animation:celestial-turn 120s linear infinite reverse; }
+.sun-rays { transform-origin:220px 220px; animation:celestial-turn 90s linear infinite; }
+.motion-paused svg * { animation-play-state:paused; }
+.celestial-art__caption { text-align:center; font-size:.55rem; letter-spacing:.3em; color:var(--text-dim); margin-top:-6px; }
+.celestial-art__caption span { color:var(--accent); padding-left:12px; }
+.motion-toggle { display:block; margin:10px auto 0; padding:5px 10px; color:var(--text-dim); background:transparent; border:1px solid var(--line); border-radius:20px; font:inherit; font-size:.62rem; cursor:pointer; }
+@keyframes celestial-turn { to { transform:rotate(360deg); } }
+.workspace-heading { display:flex; justify-content:space-between; gap:15px; align-items:center; font-size:.6rem; letter-spacing:.18em; color:var(--accent); padding-block:18px; border-top:1px solid var(--line); }
+.workspace-heading span:last-child { color:var(--text-dim); letter-spacing:.02em; font-size:.75rem; }
+.layout { padding-top:10px; gap:25px; scroll-margin-top:100px; }
+.panel { background:linear-gradient(160deg,color-mix(in srgb,var(--celestial-orchid) 5%,var(--surface)),var(--surface) 65%); box-shadow:0 12px 35px #06020b15; }
+.panel__title { font-size:1.2rem; }
+.panel__title span { color:var(--accent); margin-right:8px; }
+.panel__head { margin-bottom:10px; }
+.panel__intro { color:var(--text-dim); font-size:.78rem; line-height:1.7; margin-bottom:24px; }
+label { font-size:.65rem; letter-spacing:.1em; }
+input,select { font-size:.85rem; min-height:44px; }
+input:focus,select:focus { border-color:var(--celestial-orchid); }
+input[type='checkbox'] { min-height:auto; }
+.chartheader { grid-template-columns:1fr; gap:15px; margin-bottom:20px; }
+.chartheader h1 { font-size:1.75rem; }
+.chartheader__asc { font-size:.55em; }
+.chartheader .eyebrow { font-size:.58rem; color:var(--accent); }
+.chartheader__meta { font-size:.72rem; }
+.chartheader__stats { gap:22px; padding:12px 16px; background:color-mix(in srgb,var(--surface) 75%,transparent); border:1px solid var(--line); border-radius:12px; }
+.chartheader__stats > div { flex:1; }
+.chartheader__stats dt { font-size:.56rem; }
+.chartheader__stats dd { font-size:.76rem; }
+.chartheader__stats dd.tiny { font-size:.64rem; }
+.cosmic-snapshot { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:22px; }
+.cosmic-card { position:relative; overflow:hidden; padding:19px 18px 15px; border:1px solid color-mix(in srgb,var(--card-color) 32%,var(--line)); border-radius:15px; background:linear-gradient(120deg,color-mix(in srgb,var(--card-color) 13%,var(--surface)),var(--surface)); transition:transform .25s,border-color .25s; }
+.cosmic-card:hover { transform:translateY(-3px); border-color:var(--card-color); }
+.cosmic-card--sun { --card-color:#e6a25e; }
+.cosmic-card--moon { --card-color:#b78aee; }
+.cosmic-card--rising { --card-color:#61c6c4; }
+.cosmic-card__glyph { position:absolute; right:13px; top:10px; font-size:2.5rem; line-height:1; color:var(--card-color); opacity:.7; }
+.cosmic-card .eyebrow { font-size:.55rem; margin-bottom:12px; padding-right:28px; }
+.cosmic-card h3 { font-size:1.4rem; margin-bottom:6px; }
+.cosmic-card__subtitle { font-size:.68rem; color:var(--text-muted); margin-bottom:12px; }
+.cosmic-card__detail { font-size:.62rem; color:var(--text-muted); padding-top:9px; border-top:1px solid color-mix(in srgb,var(--card-color) 20%,transparent); }
+.tabs { padding:5px; border:1px solid var(--line); border-radius:12px; background:var(--surface); gap:3px; }
+.tab { padding:10px 11px; border-radius:8px; border-bottom:0; font-size:.74rem; }
+.tab__icon { padding-right:6px; font-size:.95rem; }
+.tab[aria-selected='true'] { color:var(--text); background:color-mix(in srgb,var(--celestial-orchid) 17%,var(--surface)); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--celestial-orchid) 22%,transparent); }
+.views { animation:view-arrive .3s ease-out; }
+@keyframes view-arrive { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+.section__title { font-size:1.1rem; }
+.card { box-shadow:0 6px 24px #06020b10; }
+.kundli { padding:14px; border-radius:18px; border:1px solid var(--accent-line); background:radial-gradient(ellipse at top,#ac6ce812,transparent 70%),var(--chart-bg); box-shadow:0 0 30px #a664df0a; }
+.kundli__svg { border-radius:12px; }
+.planetcell__glyph { color:var(--celestial-orchid); }
+.table tbody tr:nth-child(3n+1) .planetcell__glyph { color:var(--accent); }
+.table tbody tr:nth-child(3n+2) .planetcell__glyph { color:var(--benefic); }
+.table th { font-size:.58rem; }
+.table { font-size:.78rem; }
+.progress__fill { background:linear-gradient(90deg,#a47ae1,#edb978); }
+.footer { background:color-mix(in srgb,var(--surface) 50%,transparent); }
+@media (min-width:1024px) { .layout { grid-template-columns:310px minmax(0,1fr); } .panel { top:96px; max-height:calc(100dvh - 112px); } .panel .row--2 { grid-template-columns:1fr; gap:0; } }
+@media (min-width:1250px) { .grid2 { grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:20px; } }
+@media (min-width:900px) and (max-width:1249px) { .grid2 { grid-template-columns:minmax(0,1fr); } .grid2 > .stack:first-child .kundli { max-width:480px; margin-inline:auto; } }
+@media (max-width:1023px) { .cosmic-hero__copy { padding-left:0; } .cosmic-hero { gap:8px; } .cosmic-hero h1 { font-size:clamp(2.4rem,4.7vw,4rem); } .cosmic-hero__note { display:none; } }
+@media (max-width:640px) {
+ .topbar__inner { min-height:68px; } .topbar__tag { display:none; }
+ .cosmic-hero { grid-template-columns:1fr; padding-top:32px; text-align:center; gap:10px; }
+ .cosmic-hero__copy { z-index:1; } .cosmic-hero h1 { font-size:clamp(2.2rem,8.5vw,3.4rem); }
+ .cosmic-hero .eyebrow { font-size:.54rem; margin-bottom:15px; }
+ .cosmic-hero__intro { margin:18px auto 22px; max-width:330px; font-size:.85rem; }
+ .cosmic-hero .cluster,.cosmic-hero__tags { justify-content:center; }
+ .cosmic-hero__tags { gap:18px; margin-top:22px; font-size:.66rem; }
+ .celestial-art { max-width:270px; } .workspace-heading span:last-child { display:none; }
+ .layout { scroll-margin-top:85px; } .panel { padding:20px; }
+ .cosmic-snapshot { gap:7px; } .cosmic-card { padding:13px 10px; border-radius:12px; }
+ .cosmic-card__glyph { position:static; display:block; font-size:1.7rem; margin-bottom:12px; }
+ .cosmic-card .eyebrow { padding:0; font-size:.5rem; margin-bottom:7px; }
+ .cosmic-card h3 { font-size:1.07rem; overflow-wrap:anywhere; } .cosmic-card__subtitle { font-size:.6rem; min-height:29px; }
+ .cosmic-card__detail { font-size:.57rem; overflow-wrap:anywhere; }
+ .chartheader__stats { gap:14px; } .chartheader__stats > div { flex-basis:100px; }
+}
+@media (prefers-reduced-motion:reduce) { .zodiac-orbit,.inner-orbit,.sun-rays { animation:none; } .motion-toggle { display:none; } }
+@media print { .cosmic-snapshot { break-inside:avoid; } .views { animation:none; } }

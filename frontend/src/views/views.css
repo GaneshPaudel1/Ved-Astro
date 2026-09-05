@@ -1,0 +1,613 @@
+.card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s4) var(--s4) var(--s3);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------- planet cells */
+.planetcell {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.planetcell__glyph {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  width: 1.2em;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.planetcell__name {
+  font-weight: 500;
+}
+
+.planetcell__sanskrit {
+  display: block;
+  line-height: 1.1;
+}
+
+/* ------------------------------------------------------------ legend ---- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend__swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ------------------------------------------------------------ detail ---- */
+.detail {
+  border-color: var(--accent-line);
+}
+
+.detail__name {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--s3) var(--s4);
+  margin: var(--s4) 0 0;
+}
+
+.detail__grid dt {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.detail__grid dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.detail__block {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.detail__block p {
+  margin-bottom: var(--s2);
+}
+
+.detail__strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.progress {
+  height: 5px;
+  background: var(--surface-sunken);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: var(--s2) 0 var(--s1);
+}
+
+.progress__fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+/* -------------------------------------------------------- bindu strip --- */
+.bindurow {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  margin: var(--s2) 0;
+}
+
+.bindurow__cell {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  text-align: center;
+  padding: 3px 0;
+  border-radius: 3px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.bindurow__cell.is-here {
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------- varga grid --- */
+.varga-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--s3);
+}
+
+.varga-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.varga-card__key {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-bright);
+}
+
+.varga-card__name {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.varga-card__sig {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin: var(--s2) 0 0;
+  line-height: 1.4;
+}
+
+/* -------------------------------------------------------- dasha view ---- */
+.dasha-now {
+  display: grid;
+  gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.dasha-now__cell {
+  padding: var(--s3);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+}
+
+.dasha-now__cell.is-lead {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+
+.dasha-now__level {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.dasha-now__lord {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 2px 0;
+}
+
+.dasha-now__dates {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.dasha-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dasha-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dasha-row:hover {
+  background: var(--accent-wash);
+}
+
+.dasha-row.is-current {
+  background: var(--accent-wash);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.dasha-row__lord {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.dasha-row__span {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dasha-tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: var(--s5);
+  border-left: 1px solid var(--line);
+}
+
+.dasha-bar {
+  display: flex;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  margin-bottom: var(--s2);
+}
+
+.dasha-bar__seg {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  color: var(--text-inverse);
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.dasha-bar__seg.is-current {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+/* -------------------------------------------------- ashtakavarga grid --- */
+.av-table {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.av-table th,
+.av-table td {
+  padding: 0.35rem 0.3rem;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.av-table th:first-child,
+.av-table td:first-child {
+  text-align: left;
+  white-space: nowrap;
+  padding-right: var(--s3);
+}
+
+.av-table thead th {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.av-table tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--line-strong);
+  border-bottom: none;
+  padding-top: var(--s2);
+}
+
+.av-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 3px;
+}
+
+/* ---------------------------------------------------------- yoga cards -- */
+.yoga {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--s4);
+  background: var(--surface);
+}
+
+.yoga + .yoga {
+  margin-top: var(--s3);
+}
+
+.yoga--major {
+  border-left: 3px solid var(--positive);
+}
+.yoga--moderate {
+  border-left: 3px solid var(--info);
+}
+.yoga--weak {
+  border-left: 3px solid var(--text-dim);
+}
+.yoga--caution {
+  border-left: 3px solid var(--caution);
+}
+
+.yoga__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-bottom: var(--s2);
+}
+
+.yoga__name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.yoga__summary {
+  font-size: 0.9rem;
+  margin-bottom: var(--s2);
+}
+
+.yoga__detail {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.yoga__planets {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ----------------------------------------------------------- panchang --- */
+.limbs {
+  display: grid;
+  gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+}
+
+.limb {
+  padding: var(--s4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.limb__label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.limb__value {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: var(--s1) 0;
+}
+
+.limb__meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.timing {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+
+.timing:last-child {
+  border-bottom: none;
+}
+
+.timing__value {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.timing--bad .timing__value {
+  color: var(--negative);
+}
+.timing--good .timing__value {
+  color: var(--positive);
+}
+
+/* ------------------------------------------------------------ matching -- */
+.koota {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.koota__name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.koota__score {
+  font-family: var(--font-data);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.koota__bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: var(--surface-sunken);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.koota__fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.koota__why {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.koota__detail {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.55;
+}
+
+.score-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+  flex-wrap: wrap;
+}
+
+.score-hero__number {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 2rem + 3vw, 4.2rem);
+  font-weight: 600;
+  line-height: 1;
+  font-variation-settings: 'opsz' 120, 'WONK' 1;
+}
+
+.score-hero__of {
+  font-size: 0.4em;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* ------------------------------------------------------------- reading -- */
+.reading {
+  max-width: 68ch;
+}
+
+.reading__section + .reading__section {
+  margin-top: var(--s6);
+  padding-top: var(--s6);
+  border-top: 1px solid var(--line);
+}
+
+.reading__title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: var(--s3);
+}
+
+.reading__body p {
+  font-size: 1rem;
+  line-height: 1.72;
+}
+
+.reading__body strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.reading__evidence {
+  margin-top: var(--s3);
+  padding: var(--s3);
+  border-left: 2px solid var(--line-strong);
+  background: var(--surface-sunken);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.reading__evidence li {
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  list-style: none;
+}
+
+.reading__evidence ul {
+  margin: 0;
+  padding: 0;
+}
+
+/* -------------------------------------------------------------- misc ---- */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--s3);
+}
+
+.stat {
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.stat__label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.stat__value {
+  font-family: var(--font-data);
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-top: 2px;
+}

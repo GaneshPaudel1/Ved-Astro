@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+
+# Swiss Ephemeris data files (large; optional — see README)
+backend/ephe/*.se1
+
+# Node
+node_modules/
+dist/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.vite/ 

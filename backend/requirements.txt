@@ -1,0 +1,15 @@
+# Calculation core
+pyswisseph==2.10.3.2      # Swiss Ephemeris binding — every position comes from here
+timezonefinder==8.3.0     # coordinates -> IANA zone
+tzdata==2026.3            # IANA tz database (REQUIRED on Windows: no system copy exists)
+
+# Web
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.4
+sqlalchemy==2.0.52
+httpx==0.28.1             # geocoding client
+python-dateutil==2.9.0.post0
+
+# Dev
+pytest==9.1.1

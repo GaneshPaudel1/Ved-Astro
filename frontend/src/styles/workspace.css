@@ -1,0 +1,43 @@
+.topbar .topbar__library { width:auto; border-radius:24px; padding:8px 16px; font-size:.8rem; height:auto; }
+.topbar__library span { padding-left:9px; color:var(--accent); }
+.chart-library { scroll-margin-top:100px; padding-top:24px; padding-bottom:32px; }
+.library-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:20px; }
+.library-heading h2 { font-size:1.8rem; margin-bottom:10px; }
+.library-heading h2 span { display:inline-grid; place-items:center; vertical-align:middle; width:27px; height:27px; border:1px solid var(--line-strong); border-radius:50%; font: .75rem var(--font-body); color:var(--celestial-orchid); }
+.library-heading .eyebrow { color:var(--celestial-orchid); font-size:.6rem; }
+.library-heading .btn { flex-shrink:0; }
+.library-search { max-width:420px; margin-bottom:18px; }
+.library-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(265px,1fr)); gap:16px; max-height:560px; overflow:auto; padding:3px; }
+.saved-chart { --collection-color:#b78aee; border:1px solid var(--line); border-radius:18px; padding:22px; background:radial-gradient(ellipse at top right,color-mix(in srgb,var(--collection-color) 12%,transparent),transparent 70%),var(--surface); transition:border-color .2s,box-shadow .2s; min-width:0; }
+.saved-chart--1 { --collection-color:#edbc7c; }.saved-chart--2 { --collection-color:#61c6c4; }
+.saved-chart.is-active { border-color:var(--collection-color); box-shadow:0 0 0 2px color-mix(in srgb,var(--collection-color) 12%,transparent); }
+.saved-chart__top { display:flex; justify-content:space-between; align-items:center; margin-bottom:17px; }
+.saved-chart__avatar { display:grid; place-items:center; width:42px; height:42px; border:1px solid color-mix(in srgb,var(--collection-color) 40%,transparent); background:color-mix(in srgb,var(--collection-color) 12%,transparent); color:var(--text); border-radius:50%; font:1.35rem var(--font-display); }
+.saved-chart__badge { font-size:.62rem; color:var(--text-muted); }.is-active .saved-chart__badge { color:var(--celestial-orchid); }
+.saved-chart h3 { font-size:1.3rem; overflow-wrap:anywhere; margin-bottom:9px; }
+.saved-chart__birth { font: .7rem var(--font-data); color:var(--text-muted); margin-bottom:7px; }
+.saved-chart__place { font-size:.72rem; color:var(--text-dim); overflow-wrap:anywhere; }
+.saved-chart__signs { display:flex; flex-wrap:wrap; gap:8px; margin:19px 0; }
+.saved-chart__signs span { background:var(--surface-raised); border-radius:6px; padding:4px 8px; font-size:.68rem; color:var(--text-muted); }
+.saved-chart__actions { display:flex; gap:5px; border-top:1px solid var(--line); padding-top:14px; }.saved-chart__actions > :first-child { margin-right:auto; }
+.saved-chart__rename .cluster { margin-top:12px; }
+.library-empty { grid-column:1/-1; display:flex; align-items:center; gap:25px; padding:28px; border:1px dashed var(--line-strong); border-radius:18px; background:linear-gradient(110deg,#ad75db0c,transparent); }
+.library-empty > span { font-size:3rem; color:var(--celestial-orchid); }.library-empty h3 { margin-bottom:9px; }.library-empty p { font-size:.82rem; color:var(--text-muted); margin-bottom:8px; }.library-empty .tiny { font-size:.68rem; }
+.library-feedback:empty { display:none; }.library-status { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:.8rem; color:var(--text-muted); padding:12px 16px; margin-bottom:20px; border:1px solid var(--accent-line); border-radius:12px; background:var(--accent-wash); }
+.library-feedback .notice { margin-bottom:15px; }
+.chart-context { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:17px; font-size:.65rem; color:var(--celestial-orchid); }
+.chart-context + .notice { margin-bottom:18px; }
+.demo-tag { font-size:.53rem; letter-spacing:.07em; border:1px solid currentColor; border-radius:4px; padding:2px 4px; margin-left:5px; vertical-align:middle; }
+.new-chart-welcome { padding:70px 30px; text-align:center; background:radial-gradient(ellipse at center,#9b62d915,transparent 70%); border:1px solid var(--line); border-radius:24px; }
+.new-chart-welcome > div { font-size:5rem; color:var(--celestial-orchid); }.new-chart-welcome h2 { margin-bottom:17px; }.new-chart-welcome > p:last-child { color:var(--text-muted); font-size:.9rem; max-width:370px; margin:auto; }
+.chat-launcher { position:fixed; bottom:24px; right:26px; z-index:70; display:flex; align-items:center; gap:10px; padding:14px 20px; border:1px solid #d6adf2; border-radius:50px; background:linear-gradient(120deg,#68468c,#402951); color:#fff5ff; font: .83rem var(--font-body); box-shadow:0 8px 35px #08031055; cursor:pointer; }.chat-launcher > span:first-child { font-size:1.2rem; color:#f2c98c; }
+.astro-chat { position:fixed; right:26px; bottom:96px; width:410px; max-width:calc(100vw - 24px); height:min(650px,calc(100dvh - 120px)); z-index:65; border:1px solid var(--line-strong); border-radius:23px; background:var(--surface); box-shadow:0 20px 80px #05010b66; display:flex; flex-direction:column; overflow:hidden; animation:view-arrive .25s ease-out; }
+.astro-chat__header { display:flex; align-items:center; gap:12px; padding:19px; background:linear-gradient(120deg,#9763d020,transparent); border-bottom:1px solid var(--line); }.astro-chat__orb { display:grid; place-items:center; width:38px; height:38px; background:#a67bd126; color:var(--accent); border:1px solid var(--accent-line); border-radius:50%; font-size:1.4rem; }.astro-chat__header h2 { font-size:1.3rem; }.astro-chat__header p { margin:5px 0 0; font-size:.65rem; color:var(--text-muted); }.astro-chat__header p span { margin-left:7px; font-size:.5rem; color:var(--celestial-orchid); }.astro-chat__header .btn { margin-left:auto; font-size:1.4rem; padding:4px 10px; }
+.astro-chat__context { display:flex; justify-content:space-between; gap:12px; padding:10px 20px; font-size:.72rem; color:var(--text); border-bottom:1px solid var(--line); overflow-wrap:anywhere; }.astro-chat__context span { color:var(--text-dim); font-size:.6rem; flex-shrink:0; }
+.astro-chat__log { flex:1; min-height:80px; overflow:auto; padding:18px; overscroll-behavior:contain; }
+.chat-message { padding:15px; border-radius:14px; margin-bottom:15px; font-size:.81rem; line-height:1.7; overflow-wrap:anywhere; }.chat-message > span { display:block; font-size:.52rem; letter-spacing:.12em; color:var(--text-dim); margin-bottom:7px; }.chat-message p { white-space:pre-wrap; margin-bottom:9px; }.chat-message p:last-child { margin-bottom:0; }.chat-message--assistant { border:1px solid var(--line); background:var(--surface-raised); margin-right:12px; }.chat-message--user { background:color-mix(in srgb,var(--celestial-orchid) 16%,var(--surface)); border:1px solid color-mix(in srgb,var(--celestial-orchid) 30%,var(--line)); margin-left:35px; }.chat-disclosure { color:var(--text-muted); font-size:.7rem; }.chat-typing { font-size:.72rem; color:var(--celestial-orchid); }
+.chat-prompts { padding:5px 16px 12px; display:flex; gap:6px; flex-wrap:wrap; }.chat-prompts button { font: .65rem var(--font-body); color:var(--text-muted); background:transparent; border:1px solid var(--line-strong); border-radius:20px; padding:6px 9px; cursor:pointer; }.chat-prompts button:hover { border-color:var(--celestial-orchid); color:var(--text); }
+.chat-composer { padding:0 16px; display:flex; gap:8px; }.chat-composer input { min-width:0; font-size:.8rem; }.chat-composer button { font-size:1.2rem; padding:5px 14px; }
+.chat-footer { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:10px 17px 14px; font-size:.55rem; color:var(--text-dim); }.chat-footer button { font:inherit; border:0; background:none; color:var(--text-muted); text-decoration:underline; cursor:pointer; }.chat-footer button:disabled,.chat-prompts button:disabled { opacity:.5; cursor:default; }
+.footer { padding-bottom:100px; }
+@media(max-width:640px) { .library-heading { align-items:flex-start; }.library-heading h2 { font-size:1.4rem; }.library-heading .small { font-size:.73rem; }.library-heading .btn { font-size:.72rem; padding:9px 12px; }.library-heading .eyebrow { font-size:.5rem; }.library-empty { padding:20px; gap:15px; }.library-empty > span { font-size:2rem; }.library-grid { max-height:470px; }.chart-library { scroll-margin-top:80px; }.astro-chat { right:12px; bottom:86px; height:min(650px,calc(100dvh - 100px)); }.chat-launcher { right:14px; bottom:18px; padding:12px 16px; }.chart-context { gap:8px; }.chart-context .btn { font-size:.7rem; }.library-status { flex-wrap:wrap; } }

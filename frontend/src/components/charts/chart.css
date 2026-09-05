@@ -1,0 +1,197 @@
+/*
+  The chart is the one place in this interface that gets to be the focus, so
+  everything here is about legibility of the diagram: hairline rules, tabular
+  labels, and colour used only to carry dignity.
+*/
+
+.kundli {
+  margin: 0;
+  width: 100%;
+}
+
+.kundli__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s2);
+  flex-wrap: wrap;
+}
+
+.kundli__title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.kundli__sub {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.kundli__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  overflow: visible;
+}
+
+.kundli__ground {
+  fill: var(--chart-bg);
+}
+
+.kundli__frame {
+  fill: none;
+  stroke: var(--chart-line-strong);
+  stroke-width: 1.25;
+}
+
+.kundli__rule {
+  stroke: var(--chart-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.kundli__box {
+  fill: transparent;
+  stroke: var(--chart-line);
+  stroke-width: 1;
+}
+
+.kundli__box.is-asc {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.kundli__ascmark {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.kundli__centrebox {
+  fill: none;
+  stroke: var(--chart-line);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  opacity: 0.5;
+}
+
+.kundli__hit {
+  fill: transparent;
+}
+
+/* Sign number written small, as on a paper kundli */
+.kundli__signnum,
+.kundli__signname {
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--chart-label);
+  opacity: 0.85;
+  user-select: none;
+}
+
+.kundli__asc {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--accent);
+}
+
+.kundli__planet {
+  font-family: var(--font-data);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: font-size 0.12s ease;
+}
+
+.kundli__planet:hover,
+.kundli__planet.is-active {
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.kundli__planet.is-active {
+  paint-order: stroke fill;
+  stroke: var(--accent);
+  stroke-width: 0.6px;
+}
+
+.kundli__planet:focus-visible {
+  outline: none;
+  paint-order: stroke fill;
+  stroke: var(--accent-bright);
+  stroke-width: 1.2px;
+}
+
+.kundli__retro {
+  font-size: 9px;
+  fill: var(--retro);
+}
+
+.kundli__dignity {
+  font-size: 9px;
+  opacity: 0.85;
+}
+
+.kundli__centre-main {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text-muted);
+}
+
+.kundli__centre-sub {
+  font-family: var(--font-data);
+  font-size: 9.5px;
+  fill: var(--text-dim);
+}
+
+/* ---- empty state ---- */
+.kundli--empty .kundli__placeholder {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--s2);
+  padding: var(--s5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--chart-bg);
+}
+
+.kundli--empty p {
+  max-width: 30ch;
+  margin: 0;
+}
+
+/* ---- small multiples: the varga grid ---- */
+.varga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--s4);
+}
+
+.varga-grid .kundli__planet {
+  font-size: 10px;
+}
+.varga-grid .kundli__planet:hover,
+.varga-grid .kundli__planet.is-active {
+  font-size: 11px;
+}
+.varga-grid .kundli__signnum,
+.varga-grid .kundli__signname {
+  font-size: 8px;
+}
+.varga-grid .kundli__asc {
+  font-size: 7px;
+}

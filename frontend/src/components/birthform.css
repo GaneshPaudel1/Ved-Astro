@@ -1,0 +1,182 @@
+.bform {
+  display: block;
+}
+
+.bform__check {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s2);
+  margin-bottom: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.bform__check input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.bform > .notice {
+  margin-bottom: var(--s4);
+}
+
+/* ---- place autocomplete ---- */
+.bform__place {
+  position: relative;
+}
+
+.bform__place-spin {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.bform__list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: var(--s1);
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+
+.bform__opt {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'name coord'
+    'sub  coord';
+  gap: 0 var(--s3);
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bform__opt.is-cursor {
+  background: var(--accent-wash);
+}
+
+.bform__opt-name {
+  grid-area: name;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.bform__opt-sub {
+  grid-area: sub;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.bform__opt-coord {
+  grid-area: coord;
+  align-self: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.bform__linkbtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: inherit;
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.bform__manual {
+  margin-top: var(--s2);
+}
+
+.bform__manual label {
+  font-size: 0.7rem;
+}
+
+/* ---- timezone readout: the form showing its work ---- */
+.bform__tz {
+  margin-bottom: var(--s4);
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+
+.bform__tz.is-flagged {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+}
+
+.bform__tz-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.bform__tz-row + .bform__tz-row {
+  margin-top: var(--s1);
+}
+
+.bform__tz-note {
+  margin: var(--s2) 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.bform__toggle {
+  margin-bottom: var(--s3);
+  padding-left: 0;
+}
+
+.bform__advanced {
+  padding: var(--s4);
+  margin-bottom: var(--s4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+
+.bform__advanced .field:last-child {
+  margin-bottom: 0;
+}
+
+.bform__submit {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  padding-block: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .bform--compact .bform__submit {
+    width: auto;
+  }
+}
