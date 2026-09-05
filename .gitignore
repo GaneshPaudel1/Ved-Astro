@@ -18,3 +18,8 @@ Thumbs.db
 .vscode/
 .idea/
 .vite/ 
+
+# Local environment files can contain deployment credentials or API URLs.
+.env
+.env.*
+!.env.example

@@ -2,7 +2,13 @@ import type {
   Bundle, DashaTree, GeoResult, MatchResult, Panchang, Reference, BirthInput,
 } from './types'
 
-const BASE = '/api'
+/*
+  Local Vite development proxies `/api` to FastAPI. In production the frontend
+  is a separate static site, so Render supplies the API host at build time.
+  Keep the fallback for local development and previews.
+*/
+const configuredApiBase = import.meta.env.VITE_API_BASE?.trim().replace(/\/+$/, '')
+const BASE = configuredApiBase ? `${configuredApiBase}/api` : '/api'
 
 export class ApiError extends Error {
   status: number
