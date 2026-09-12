@@ -106,6 +106,32 @@ def test_timeout(monkeypatch):
         assert error.value.status_code == 504
 
 
+@pytest.mark.parametrize("status,reason", [(400, "API_KEY_INVALID"),
+    (403, "SERVICE_DISABLED"), (403, "API_KEY_HTTP_REFERRER_BLOCKED"),
+    (404, "secret-unrecognized-reason")])
+def test_provider_diagnostics_never_expose_raw_details(status, reason, caplog):
+    response = httpx.Response(status, json={"error": {
+        "message": "secret-key-and-private-chart", "details": [{"reason": reason,
+        "metadata": {"key": "private-key"}}]}})
+    with pytest.raises(HTTPException) as error:
+        gemini.provider_failure(response)
+    output = error.value.detail + caplog.text
+    assert f"HTTP {status}" in output
+    assert "secret" not in output
+    assert "private" not in output
+    if reason != "secret-unrecognized-reason":
+        assert reason in output
+
+
+def test_network_error_does_not_leak_url_or_key(monkeypatch, caplog):
+    monkeypatch.setenv("GEMINI_API_KEY", "private-key")
+    with patch.object(gemini.httpx, "post", side_effect=httpx.ConnectError("private-key")):
+        with pytest.raises(HTTPException) as error:
+            gemini.reply(schemas.ChatRequest(birth=BIRTH, message="Hello"))
+    assert "CHAT_NETWORK" in error.value.detail
+    assert "private-key" not in error.value.detail + caplog.text
+
+
 def test_chat_limit(authenticated_client):
     with patch.object(gemini, "reply", return_value="Hello"):
         for _ in range(6):

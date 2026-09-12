@@ -1,5 +1,6 @@
 """Bounded, authenticated Gemini chat with server-calculated chart context."""
 import json
+import logging
 import os
 import re
 import threading
@@ -12,6 +13,40 @@ from . import schemas, services
 
 _requests: dict[int, list[float]] = {}
 _lock = threading.Lock()
+_logger = logging.getLogger(__name__)
+
+
+def provider_failure(response: httpx.Response) -> None:
+    """Expose only fixed diagnostics, never provider messages or credentials."""
+    reasons = {
+        "API_KEY_INVALID": "Gemini rejected the API key. Check GEMINI_API_KEY in Render.",
+        "API_KEY_SERVICE_BLOCKED": "This API key does not allow the Gemini API. Check its API restrictions.",
+        "API_KEY_HTTP_REFERRER_BLOCKED": "This key is restricted to browser websites and cannot be used by the backend.",
+        "API_KEY_IP_ADDRESS_BLOCKED": "This key's IP restrictions block the backend server.",
+        "SERVICE_DISABLED": "The Gemini API is disabled for the key's Google Cloud project.",
+        "BILLING_DISABLED": "Google requires billing for this request. Check free-tier model eligibility before enabling billing.",
+    }
+    reason = "UNKNOWN"
+    try:
+        details = response.json().get("error", {}).get("details", [])
+        for detail in details:
+            candidate = detail.get("reason") if isinstance(detail, dict) else None
+            if isinstance(candidate, str) and candidate in reasons:
+                reason = candidate
+                break
+    except (ValueError, AttributeError, TypeError):
+        pass
+    status = response.status_code
+    _logger.warning("Gemini request failed: HTTP %s; reason=%s", status, reason)
+    message = reasons.get(reason) or {
+        400: "Gemini rejected the request. Check the API key and model configuration.",
+        401: "Gemini could not authenticate the backend API key.",
+        403: "Google denied Gemini access. Check the key restrictions and project eligibility.",
+        404: "The configured Gemini model was not found or is unavailable to this API key.",
+        429: "Gemini quota is exhausted or its request limit was reached. Check AI Studio usage limits.",
+    }.get(status, "Gemini is temporarily unavailable. Please try again later.")
+    raise HTTPException(429 if status == 429 else 502,
+                        f"{message} (Gemini HTTP {status}; {reason})")
 
 
 def check_rate_limit(user_id: int) -> None:
@@ -71,8 +106,8 @@ def reply(req: schemas.ChatRequest) -> str:
             json={"systemInstruction": {"parts": [{"text": instruction}]},
                   "contents": contents, "generationConfig": {"maxOutputTokens": 4096}},
             timeout=45)
-        if response.status_code == 429:
-            raise HTTPException(429, "The AI service is busy. Please try again later.")
+        if response.is_error:
+            provider_failure(response)
         response.raise_for_status()
         data = response.json()
         candidate = (data.get("candidates") or [{}])[0]
@@ -85,5 +120,9 @@ def reply(req: schemas.ChatRequest) -> str:
         return result[:6000]
     except httpx.TimeoutException:
         raise HTTPException(504, "The AI took too long to reply. Please try again.") from None
-    except (httpx.HTTPError, ValueError, KeyError, TypeError):
-        raise HTTPException(502, "Chart chat is temporarily unavailable. Please try again later.") from None
+    except httpx.HTTPError:
+        _logger.warning("Gemini connection failed (CHAT_NETWORK)")
+        raise HTTPException(502, "The backend could not connect to Gemini. Please retry. (CHAT_NETWORK)") from None
+    except (ValueError, KeyError, TypeError, AttributeError):
+        _logger.warning("Gemini returned an unexpected response (CHAT_RESPONSE)")
+        raise HTTPException(502, "Gemini returned an unexpected response. Please retry. (CHAT_RESPONSE)") from None
