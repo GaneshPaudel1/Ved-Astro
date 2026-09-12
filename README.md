@@ -6,6 +6,9 @@ charts on every test run.
 
 ---
 
+Google sign-in, Gemini chart chat and Render environment setup are documented in
+[DEPLOYMENT.md](DEPLOYMENT.md). Charts remain in the browser collection.
+
 ## Running it
 
 Two processes: a Python API and a Vite dev server.
@@ -236,9 +239,9 @@ Mobile-first, keyboard-navigable with visible focus, and
   detected placements. It is deterministic and it will not surprise you.
 - **Yoga detection is conservative.** Where texts disagree, the stricter
   reading wins. Expect false negatives, not false positives.
-- **Auth is minimal** — PBKDF2-SHA256 at 200k iterations with bearer tokens,
-  adequate for a testing-phase build. No email verification, rate limiting, or
-  password reset.
+- **Auth uses Google Identity Services** with server-verified ID tokens and
+  30-day app bearer sessions. Password sign-in is disabled. Gemini chart chat
+  requires sign-in and has a per-account, per-process request limit.
 - Export is browser print-to-PDF rather than server-side rendering.
 - Text is centralised in `interpret/rules/text.py` but not wired to an i18n
   framework, per the brief.

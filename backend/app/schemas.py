@@ -71,6 +71,45 @@ class ChartRequest(BirthInput):
     include: list[str] | None = None
 
 
+class LibraryChart(BaseModel):
+    id: str = Field(min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_-]+$")
+    birth: BirthInput
+    savedAt: str = Field(min_length=1, max_length=40)
+
+
+class LibraryUpdate(BaseModel):
+    revision: int = Field(ge=0)
+    charts: list[LibraryChart] = Field(max_length=100)
+
+    @model_validator(mode="after")
+    def unique_ids(self):
+        if len({chart.id for chart in self.charts}) != len(self.charts):
+            raise ValueError("Chart IDs must be unique")
+        return self
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(min_length=1, max_length=10000)
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str = Field(min_length=1, max_length=6000)
+
+
+class ChatRequest(BaseModel):
+    birth: BirthInput
+    message: str = Field(min_length=1, max_length=1000)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=12)
+
+    @field_validator("message")
+    @classmethod
+    def nonempty_message(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("message cannot be blank")
+        return value.strip()
+
+
 class ProfileCreate(BirthInput):
     relationship_label: str = Field(default="", max_length=60)
     notes: str = Field(default="", max_length=4000)

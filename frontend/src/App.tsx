@@ -11,14 +11,18 @@ import { PanchangView } from './views/PanchangView'
 import { MatchView } from './views/MatchView'
 import { ReadingView } from './views/ReadingView'
 import { CelestialHero, CosmicSnapshot } from './components/Celestial'
-import { ChartLibrary, readLibrary, writeLibrary, type SavedChart } from './components/ChartLibrary'
+import { ChartLibrary, type SavedChart } from './components/ChartLibrary'
+import { useChartLibrary } from './components/useChartLibrary'
 import { AstroChat } from './components/AstroChat'
+import { GoogleAccount, type Account } from './components/GoogleAccount'
+import { DashboardWelcome } from './components/DashboardWelcome'
 import './app.css'
 import './styles/celestial.css'
 import './styles/workspace.css'
 import './styles/immersive.css'
 import './styles/dreamscape.css'
 import './styles/realms.css'
+import './styles/dashboard.css'
 import { useCosmicTilt } from './components/CosmicScene'
 
 const TAB_ICONS = ['◇', '✧', '◷', '✦', '♄', '☾', '♡', '≋']
@@ -50,6 +54,20 @@ const BLANK: BirthInput = {
 }
 
 export default function App() {
+  const [user, setUser] = useState<Account | null>(null)
+  useEffect(() => {
+    const syncSession = (event: StorageEvent) => {
+      if (event.key !== 'jyotish_token' && event.key !== null) return
+      setUser(null)
+      api.me().then(setUser).catch(() => setUser(null))
+    }
+    window.addEventListener('storage', syncSession)
+    return () => window.removeEventListener('storage', syncSession)
+  }, [])
+  return <Workspace key={user?.id ?? 'guest'} user={user} setUser={setUser} />
+}
+
+function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Account | null) => void }) {
   const [motionPaused, setMotionPaused] = useState(() => {
     try { return localStorage.getItem('jyotish_motion_paused') === 'true' } catch { return false }
   })
@@ -58,9 +76,8 @@ export default function App() {
     try { localStorage.setItem('jyotish_motion_paused', String(motionPaused)) } catch { /* Motion still works without storage. */ }
   }, [motionPaused])
   const [birth, setBirth] = useState<BirthInput>(BLANK)
-  const [initialLibrary] = useState(readLibrary)
-  const [charts, setCharts] = useState<SavedChart[]>(initialLibrary.charts)
-  const [libraryError, setLibraryError] = useState<string | null>(initialLibrary.error)
+  const library = useChartLibrary(user?.id ?? null)
+  const { charts, error: libraryError, persist } = library
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeBirth, setActiveBirth] = useState<BirthInput>(BLANK)
   const [formVersion, setFormVersion] = useState(0)
@@ -87,36 +104,9 @@ export default function App() {
     api.reference().then(setReference).catch(() => setReference(null))
   }, [])
 
-  /**
-   * `userInitiated` matters: on a narrow screen we collapse the form after a
-   * cast so the chart is what you see. That is only right when the person
-   * actually pressed the button — doing it for the sample chart cast on load
-   * would hide a form they never touched.
-   */
   useEffect(() => {
-    const sync = (event: StorageEvent) => {
-      if (event.key !== 'jyotish_chart_library_v1' && event.key !== null) return
-      const latest = readLibrary()
-      if (latest.error) { setLibraryError(latest.error); return }
-      setCharts(latest.charts)
-      setActiveId(id => latest.charts.some(c => c.id === id) ? id : null)
-    }
-    window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
-  }, [])
-
-  const persist = (next: SavedChart[]) => {
-    if (initialLibrary.error) { setLibraryError(initialLibrary.error); return false }
-    const latest = readLibrary()
-    if (latest.error) { setLibraryError(latest.error); return false }
-    if (JSON.stringify(latest.charts) !== JSON.stringify(charts)) {
-      setCharts(latest.charts)
-      setLibraryError('The collection changed in another tab. It has been refreshed; please try your change again.')
-      return false
-    }
-    try { writeLibrary(next); setCharts(next); setLibraryError(null); return true }
-    catch { setLibraryError('This browser could not save the collection. Storage may be full or unavailable. Your open chart is still available, but the change was not saved.'); return false }
-  }
+    if (activeId && !charts.some(c => c.id === activeId)) setActiveId(null)
+  }, [charts, activeId])
 
   const cast = async (userInitiated = true) => {
     const currentRequest = ++requestId.current
@@ -133,7 +123,7 @@ export default function App() {
         const id = activeId ?? crypto.randomUUID()
         const saved = { id, birth: input, bundle: b, savedAt: new Date().toISOString() }
         const next = activeId ? charts.map(c => c.id === id ? saved : c) : [saved, ...charts]
-        if (persist(next)) { setActiveId(id); setStatus(`${input.name} saved to your collection.`) }
+        if (await persist(next)) { setActiveId(id); setStatus(`${input.name} saved to your collection.`) }
         if (window.matchMedia('(max-width: 1023px)').matches) setPanelOpen(false)
       }
     } catch (e) {
@@ -167,21 +157,22 @@ export default function App() {
     setError(null)
     setTab('chart')
     setStatus(`${chart.birth.name} loaded from your collection.`)
-    setPanelOpen(!window.matchMedia('(max-width: 1023px)').matches)
+    setPanelOpen(true)
     document.getElementById('chart-workspace')?.scrollIntoView({ behavior: 'smooth' })
   }
-  const renameChart = (id: string, name: string) => {
+  const renameChart = async (id: string, name: string) => {
     const next = charts.map(c => c.id === id ? { ...c, birth: { ...c.birth, name }, bundle: { ...c.bundle, name } } : c)
-    if (!persist(next)) return
+    if (!await persist(next)) return
     if (activeId === id) { setBirth(b => ({ ...b, name })); setActiveBirth(b => ({ ...b, name })); setBundle(b => b ? { ...b, name } : b) }
     setStatus(`Chart renamed to ${name}.`)
   }
-  const removeChart = (id: string) => {
+  const removeChart = async (id: string) => {
     const chart = charts.find(c => c.id === id)
-    if (!chart || !persist(charts.filter(c => c.id !== id))) return
+    if (!chart || !await persist(charts.filter(c => c.id !== id))) return false
     setRemoved(chart)
     if (activeId === id) setActiveId(null)
     setStatus(`${chart.birth.name} removed from the collection. You can undo this.`)
+    return true
   }
 
   /* Cast the sample chart once on first load so the app is never a blank page. */
@@ -212,6 +203,8 @@ export default function App() {
           </div>
 
           <div className="cluster">
+            <GoogleAccount user={user} onChange={setUser} />
+            {user && <button className="btn btn--ghost btn--sm" aria-pressed={motionPaused} onClick={() => setMotionPaused(v => !v)}>{motionPaused ? 'Resume motion' : 'Pause motion'}</button>}
             <button className="btn topbar__library" onClick={() => document.getElementById('chart-library')?.scrollIntoView({ behavior: 'smooth' })}>◇ My charts <span>{charts.length}</span></button>
             <button
               className="btn btn--ghost btn--sm"
@@ -224,16 +217,17 @@ export default function App() {
         </div>
       </header>
 
-      <CelestialHero paused={motionPaused} onToggleMotion={() => setMotionPaused(v => !v)} onBegin={() => {
+      {user ? <DashboardWelcome user={user} charts={charts} busy={busy || library.loading || !library.ready} onNew={newChart} onLoad={loadChart} onChat={chart => { loadChart(chart); setChatOpen(true) }} /> : <CelestialHero paused={motionPaused} onToggleMotion={() => setMotionPaused(v => !v)} onBegin={() => {
         setPanelOpen(true)
         document.getElementById('chart-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
         window.setTimeout(() => document.getElementById('bf-name')?.focus({ preventScroll: true }), 100)
-      }} />
-      <ChartLibrary charts={charts} activeId={activeId} busy={busy} onNew={newChart} onLoad={loadChart} onRename={renameChart} onRemove={removeChart} />
+      }} />}
+      <ChartLibrary accountEmail={user?.email} charts={charts} activeId={activeId} busy={busy || library.loading || !library.ready} onNew={newChart} onLoad={loadChart} onRename={renameChart} onRemove={removeChart} />
       <div className="library-feedback wrap no-print">
+        {user && <div className="cluster"><span className="small" role="status">{library.loading ? 'Syncing account charts…' : library.ready ? 'Account collection up to date' : 'Account sync unavailable'}</span><button className="btn btn--sm" disabled={busy || library.loading} onClick={() => library.refresh()}>Refresh account charts</button><button className="btn btn--sm" disabled={busy || library.loading || !library.ready} onClick={async () => { if (await library.importLocal()) setStatus('Browser charts imported into your account. The browser copies are still available when signed out.') }}>Import browser charts</button></div>}
         {libraryError && <p className="notice notice--warn" role="alert">{libraryError}</p>}
-        {status && <div className="library-status" role="status"><span>✦ {status}</span>{removed && <button className="btn btn--sm" disabled={busy} onClick={() => {
-          if (persist([removed, ...charts])) { setStatus(`${removed.birth.name} restored.`); setRemoved(null) }
+        {status && <div className="library-status" role="status"><span>✦ {status}</span>{removed && <button className="btn btn--sm" disabled={busy || library.loading || !library.ready} onClick={async () => {
+          if (await persist([removed, ...charts])) { setStatus(`${removed.birth.name} restored.`); setRemoved(null) }
         }}>Undo removal</button>}</div>}
       </div>
       <div className="workspace-heading wrap no-print"><span>✦ YOUR CELESTIAL WORKSPACE</span><span>Ancient wisdom, a personal perspective</span></div>
@@ -259,7 +253,7 @@ export default function App() {
               onChange={setBirth}
               onSubmit={() => cast(true)}
               reference={reference}
-              busy={busy}
+              busy={busy || library.loading || !library.ready}
               submitLabel={activeId ? '✦ Update saved chart' : '✦ Reveal & save chart'}
             />
           )}
@@ -290,7 +284,7 @@ export default function App() {
 
           {bundle && (
             <>
-              <div className="chart-context no-print"><span>{activeId ? '◈ Saved chart' : '◇ Unsaved preview'}</span><button className="btn btn--sm" onClick={() => setChatOpen(true)}>✦ Ask about this chart <span className="demo-tag">DEMO</span></button></div>
+              <div className="chart-context no-print"><span>{activeId ? '◈ Saved chart' : '◇ Unsaved preview'}</span><button className="btn btn--sm" onClick={() => setChatOpen(true)}>✦ Ask about this chart <span className="demo-tag">AI</span></button></div>
               {JSON.stringify(birth) !== JSON.stringify(activeBirth) && <p className="notice notice--info">Birth details have changed. Reveal the chart to update the results below.</p>}
               <ChartHeader bundle={bundle} />
               <CosmicSnapshot bundle={bundle} />
@@ -349,8 +343,8 @@ export default function App() {
         </section>
       </main>
 
-      <AstroChat bundle={bundle} chartKey={activeId ? `${activeId}:${bundle?.cache_key || activeBirth.date + activeBirth.time}` : bundle?.cache_key || 'new'} open={chatOpen} onClose={() => { setChatOpen(false); document.getElementById('chat-launcher')?.focus() }} />
-      <button id="chat-launcher" className="chat-launcher no-print" aria-expanded={chatOpen} onClick={() => setChatOpen(v => !v)}><span aria-hidden="true">✦</span> {chatOpen ? 'Close chat' : 'Ask the stars'} <span className="demo-tag">DEMO</span></button>
+      <AstroChat bundle={bundle} birth={activeBirth} userId={user?.id ?? null} chartKey={activeId ? `${activeId}:${bundle?.cache_key || activeBirth.date + activeBirth.time}` : bundle?.cache_key || 'new'} open={chatOpen} onClose={() => { setChatOpen(false); document.getElementById('chat-launcher')?.focus() }} />
+      <button id="chat-launcher" className="chat-launcher no-print" aria-expanded={chatOpen} onClick={() => setChatOpen(v => !v)}><span aria-hidden="true">✦</span> {chatOpen ? 'Close chat' : 'Ask the stars'} <span className="demo-tag">AI</span></button>
       <footer className="footer no-print">
         <div className="wrap">
           <div className="footer-invitation"><span>✦</span><h2>There is a universe in every story.</h2><p>Take your time. Get to know yours.</p></div>

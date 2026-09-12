@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BirthInput, Bundle } from '../api/types'
 
 export interface SavedChart {
@@ -25,18 +25,25 @@ export function writeLibrary(charts: SavedChart[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(charts))
 }
 
-export function ChartLibrary({ charts, activeId, busy, onNew, onLoad, onRename, onRemove }: {
-  charts: SavedChart[]; activeId: string | null; busy: boolean
+export function ChartLibrary({ accountEmail, charts, activeId, busy, onNew, onLoad, onRename, onRemove }: {
+  accountEmail?: string; charts: SavedChart[]; activeId: string | null; busy: boolean
   onNew: () => void; onLoad: (chart: SavedChart) => void
-  onRename: (id: string, name: string) => void; onRemove: (id: string) => void
+  onRename: (id: string, name: string) => void; onRemove: (id: string) => Promise<boolean>
 }) {
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [name, setName] = useState('')
+  const [deleting, setDeleting] = useState<SavedChart | null>(null)
+  const [deleteError, setDeleteError] = useState('')
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    if (deleting && !dialog.current?.open) dialog.current?.showModal()
+    else if (!deleting) dialog.current?.close()
+  }, [deleting])
   const filtered = charts.filter(c => `${c.birth.name} ${c.birth.place} ${c.birth.date}`.toLowerCase().includes(query.toLowerCase()))
   return <section className="chart-library wrap no-print" id="chart-library" aria-labelledby="library-title">
     <div className="library-heading">
-      <div><p className="eyebrow">A constellation of your people</p><h2 id="library-title">My chart collection <span>{charts.length}</span></h2><p className="small muted">Saved on this browser. Return to any chart, whenever you like.</p></div>
+      <div><p className="eyebrow">A constellation of your people</p><h2 id="library-title">My chart collection <span>{charts.length}</span></h2><p className="small muted">{accountEmail ? `Saved to ${accountEmail}. Sign in on another device to open your charts.` : 'Saved on this browser. Sign in with Google to save charts across devices.'}</p></div>
       <button className="btn btn--primary" onClick={onNew} disabled={busy}>＋ New chart</button>
     </div>
     {charts.length > 0 && <div className="library-search"><label htmlFor="chart-search" className="sr-only">Search saved charts</label><input id="chart-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name, place, or birth date…" /></div>}
@@ -47,10 +54,16 @@ export function ChartLibrary({ charts, activeId, busy, onNew, onLoad, onRename, 
           <label htmlFor={`rename-${chart.id}`}>Chart name</label><input id={`rename-${chart.id}`} value={name} onChange={e => setName(e.target.value)} maxLength={80} autoFocus required />
           <div className="cluster"><button className="btn btn--sm" disabled={busy || !name.trim()}>Save name</button><button type="button" className="btn btn--ghost btn--sm" onClick={() => setEditing(null)}>Cancel</button></div>
         </form> : <><h3>{chart.birth.name || 'Untitled chart'}</h3><p className="saved-chart__birth">{chart.birth.date} · {chart.birth.time?.slice(0, 5) || 'Time unknown'}</p><p className="saved-chart__place">{chart.birth.place}</p><div className="saved-chart__signs"><span>☾ {chart.bundle.chart.planets.Moon.sign_name}</span><span>✧ {chart.bundle.chart.ascendant_sign_name || 'Time unknown'}</span></div>
-          <div className="saved-chart__actions"><button className="btn btn--sm" onClick={() => onLoad(chart)} disabled={busy} aria-label={`Load ${chart.birth.name}`}>Open chart ↗</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setEditing(chart.id); setName(chart.birth.name) }} aria-label={`Rename ${chart.birth.name}`}>Rename</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => onRemove(chart.id)} aria-label={`Remove ${chart.birth.name}`}>×</button></div></>}
+          <div className="saved-chart__actions"><button className="btn btn--sm" onClick={() => onLoad(chart)} disabled={busy} aria-label={`Load ${chart.birth.name}`}>Open & edit ↗</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setEditing(chart.id); setName(chart.birth.name) }} aria-label={`Rename ${chart.birth.name}`}>Rename</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setDeleteError(''); setDeleting(chart) }} aria-label={`Remove ${chart.birth.name}`}>×</button></div></>}
       </article>)}
-      {!charts.length && <div className="library-empty"><span aria-hidden="true">✧</span><div><h3>Your people, written in the stars.</h3><p>Create a chart for yourself, a friend, or family. Each chart you reveal is saved here automatically.</p><p className="tiny dim">Local storage only — no account or cloud sync. Clearing browser data removes this collection.</p></div></div>}
+      {!charts.length && <div className="library-empty"><span aria-hidden="true">✧</span><div><h3>Your people, written in the stars.</h3><p>Create a chart for yourself, a friend, or family. Each chart you reveal is saved here automatically.</p><p className="tiny dim">{accountEmail ? 'New charts save to your account. Use Import browser charts to copy an existing local collection.' : 'Guest charts stay on this browser. Clearing browser data removes the guest collection.'}</p></div></div>}
       {charts.length > 0 && !filtered.length && <p className="muted">No charts match “{query}”. Try another name or place.</p>}
     </div>
+    <dialog ref={dialog} className="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description" onCancel={e => { if (busy) e.preventDefault(); else setDeleting(null) }}>
+      <p className="eyebrow">YOUR CHART COLLECTION</p><h2 id="delete-title">Remove this chart?</h2>
+      <p id="delete-description">“{deleting?.birth.name}” will be removed from {accountEmail ? 'your account on all devices' : 'this browser’s collection'}. You can keep it by choosing Cancel.</p>
+      {deleteError && <p role="alert">{deleteError}</p>}
+      <div className="cluster"><button className="btn" autoFocus disabled={busy} onClick={() => setDeleting(null)}>Cancel</button><button className="btn btn--danger" disabled={busy} onClick={async () => { if (deleting && await onRemove(deleting.id)) setDeleting(null); else setDeleteError('Could not remove this chart. Close this dialog and check the collection status before retrying.') }}>{busy ? 'Removing…' : 'Remove chart'}</button></div>
+    </dialog>
   </section>
 }

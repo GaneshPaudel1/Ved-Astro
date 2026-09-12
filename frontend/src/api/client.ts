@@ -93,13 +93,17 @@ export const api = {
     }>(`/timezone?latitude=${latitude}&longitude=${longitude}&date=${date}`),
 
   // ---- accounts ----
-  register: (email: string, password: string, display_name = '') =>
-    post<any>('/auth/register', { email, password, display_name }),
-  login: (email: string, password: string) => post<any>('/auth/login', { email, password }),
+  authConfig: () => request<{ google_client_id: string; chat_enabled: boolean }>('/auth/config'),
+  googleLogin: (credential: string) => post<{ token: string; user: { id: number; email: string; display_name: string } }>('/auth/google', { credential }),
+  chat: (birth: BirthInput, message: string, history: { role: 'user' | 'assistant'; text: string }[], signal: AbortSignal) =>
+    request<{ reply: string }>('/chat', { method: 'POST', body: JSON.stringify({ birth, message, history }), signal }),
   logout: () => post<any>('/auth/logout', {}),
   me: () => request<any>('/auth/me'),
 
   // ---- profiles ----
+  library: () => request<{ revision: number; charts: { id: string; birth: BirthInput; savedAt: string }[] }>('/library'),
+  saveLibrary: (revision: number, charts: { id: string; birth: BirthInput; savedAt: string }[]) =>
+    request<{ revision: number }>('/library', { method: 'PUT', body: JSON.stringify({ revision, charts }) }),
   profiles: () => request<{ profiles: any[] }>('/profiles'),
   createProfile: (body: any) => post<any>('/profiles', body),
   deleteProfile: (id: number) => request<void>(`/profiles/${id}`, { method: 'DELETE' }),

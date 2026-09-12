@@ -1,0 +1,38 @@
+.dashboard-welcome { position:relative; margin-top:32px; margin-bottom:40px; border:1px solid #c2ace333; border-radius:28px; overflow:hidden; background:#141323; color:#faf5ff; box-shadow:0 24px 80px #07051140; }
+.dashboard-intro { position:relative; z-index:1; padding:56px 48px 36px; max-width:680px; background:linear-gradient(90deg,#141323 55%,#14132300); }
+.dashboard-intro .eyebrow { color:#dbc4f5; letter-spacing:.22em; }
+.dashboard-intro h1 { font-size:clamp(2.7rem,5vw,4.7rem); line-height:1.08; font-weight:400; margin:22px 0; }
+.dashboard-intro h1 em { color:#edcfaa; font-weight:400; }
+.dashboard-intro > p:not(.eyebrow) { color:#c9c0d9; line-height:1.85; margin-bottom:26px; }
+.dashboard-intro .btn--ghost { color:#eee4fa; text-decoration:none; }
+.dashboard-orbit { position:absolute; inset:0 0 130px 30%; background:linear-gradient(90deg,#141323,transparent 65%),url('/art/celestial-dreamscape-v1.png') center/cover; }
+.dashboard-orbit span { position:absolute; right:32px; bottom:28px; color:#f3d8ad; font-size:.55rem; letter-spacing:.3em; }
+.dashboard-count { display:flex; gap:14px; align-items:center; margin-top:36px; }
+.dashboard-count strong { font:2.5rem var(--font-data); color:#e8cfae; font-weight:400; }
+.dashboard-count span { color:#c9c0d9; font-size:.7rem; line-height:1.6; }
+.dashboard-paths { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr; background:#171523e8; border-top:1px solid #c2ace333; backdrop-filter:blur(20px); }
+.dashboard-paths button { text-align:left; padding:25px 35px; background:transparent; border:0; color:#faf5ff; cursor:pointer; display:grid; gap:9px; }
+.dashboard-paths button + button { border-left:1px solid #c2ace333; }
+.dashboard-paths button:hover:not(:disabled) { background:#ffffff08; }
+.dashboard-paths button:disabled { opacity:.55; cursor:default; }
+.dashboard-paths span { color:#bd9fda; font-size:.56rem; letter-spacing:.14em; }
+.dashboard-paths strong { font:1.2rem var(--font-body); }
+.dashboard-paths small { color:#c9c0d9; font-size:.7rem; }
+.delete-dialog { color:var(--text); background:var(--surface); border:1px solid var(--line-strong); border-radius:22px; padding:32px; max-width:min(460px,calc(100vw - 32px)); margin:auto; box-shadow:0 28px 90px #0008; }
+.delete-dialog::backdrop { background:#080613b8; backdrop-filter:blur(7px); }
+.delete-dialog h2 { margin:14px 0; font-size:1.8rem; }
+.delete-dialog > p:not(.eyebrow) { font-size:.9rem; line-height:1.7; margin-bottom:24px; overflow-wrap:anywhere; }
+.delete-dialog .cluster { justify-content:flex-end; }
+.btn--danger { background:#893e58; color:#fff; border-color:#b46982; }
+.saved-chart__actions { flex-wrap:wrap; }
+.astro-chat { width:460px; }
+.google-account { overflow-wrap:anywhere; }
+@media(max-width:700px) {
+  .dashboard-welcome { margin-top:18px; border-radius:20px; }
+  .dashboard-intro { padding:32px 23px; background:linear-gradient(90deg,#141323ed,#14132388); }
+  .dashboard-orbit { left:0; bottom:190px; opacity:.65; }
+  .dashboard-paths { grid-template-columns:1fr; }
+  .dashboard-paths button { padding:20px 23px; }
+  .dashboard-paths button + button { border-left:0; border-top:1px solid #c2ace333; }
+  .topbar__inner > .cluster { width:100%; flex-wrap:wrap; }
+}

@@ -5,8 +5,8 @@ lives in app.jyotish, every sentence in app.interpret.
 """
 from __future__ import annotations
 
-import hashlib
 import os
+import json
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -16,8 +16,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from . import geocode, schemas, services
-from .db import AuthToken, BirthProfile, User, get_session, init_db
+from . import geocode, schemas, services, google_auth, gemini
+from .db import AccountLibrary, AuthToken, BirthProfile, GoogleIdentity, User, get_session, init_db
+from sqlalchemy.exc import IntegrityError
 from .interpret.engine import available as interpreters_available
 from .jyotish import constants as K
 from .jyotish import dasha as dasha_mod
@@ -35,8 +36,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
-    allow_credentials=True,
+    allow_origins=[s.strip() for s in os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if s.strip()],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -50,11 +51,6 @@ def _startup() -> None:
 # --------------------------------------------------------------------------
 # Auth helpers
 # --------------------------------------------------------------------------
-def _hash_password(password: str, salt: str) -> str:
-    return hashlib.pbkdf2_hmac(
-        "sha256", password.encode(), salt.encode(), 200_000).hex()
-
-
 def current_user(authorization: str | None = Header(default=None),
                  db: Session = Depends(get_session)) -> User | None:
     """Optional auth. Anonymous use is fully supported; accounts only add
@@ -72,7 +68,7 @@ def current_user(authorization: str | None = Header(default=None),
 
 def require_user(user: User | None = Depends(current_user)) -> User:
     if user is None:
-        raise HTTPException(401, "Sign in to use saved profiles.")
+        raise HTTPException(401, "Sign in with Google to continue.")
     return user
 
 
@@ -291,28 +287,40 @@ def match(req: schemas.MatchRequest) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 # Accounts
 # --------------------------------------------------------------------------
-@app.post("/api/auth/register")
-def register(req: schemas.RegisterRequest,
-             db: Session = Depends(get_session)) -> dict[str, Any]:
-    if db.query(User).filter(User.email == req.email).first():
-        raise HTTPException(409, "An account with that email already exists.")
-    salt = secrets.token_hex(16)
-    user = User(email=req.email, display_name=req.display_name,
-                password_salt=salt,
-                password_hash=_hash_password(req.password, salt))
+@app.get("/api/auth/config")
+def auth_config():
+    return {"google_client_id": os.environ.get("GOOGLE_CLIENT_ID", "").strip(),
+            "chat_enabled": bool(os.environ.get("GEMINI_API_KEY", "").strip())}
+
+
+@app.post("/api/auth/google")
+def google_login(req: schemas.GoogleLoginRequest,
+                 db: Session = Depends(get_session)) -> dict[str, Any]:
+    claims = google_auth.verify_credential(req.credential)
+    identity = db.get(GoogleIdentity, claims["sub"])
+    if identity:
+        return _issue_token(db, identity.user)
+    email = claims["email"].strip().lower()
+    # Never silently merge a legacy account based only on an email address.
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(409, "This email has an existing account. Contact the site owner to migrate it to Google sign-in.")
+    user = User(email=email, display_name=str(claims.get("name", ""))[:120],
+                password_salt=secrets.token_hex(16), password_hash="google-only")
     db.add(user)
-    db.commit()
+    try:
+        db.flush()
+        db.add(GoogleIdentity(subject=claims["sub"], user_id=user.id))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Account creation changed. Please try signing in again.") from None
     return _issue_token(db, user)
 
 
-@app.post("/api/auth/login")
-def login(req: schemas.LoginRequest,
-          db: Session = Depends(get_session)) -> dict[str, Any]:
-    user = db.query(User).filter(User.email == req.email.strip().lower()).first()
-    if not user or not secrets.compare_digest(
-            _hash_password(req.password, user.password_salt), user.password_hash):
-        raise HTTPException(401, "Email or password is incorrect.")
-    return _issue_token(db, user)
+@app.post("/api/chat")
+def chart_chat(req: schemas.ChatRequest, user: User = Depends(require_user)):
+    gemini.check_rate_limit(user.id)
+    return {"reply": gemini.reply(req)}
 
 
 def _issue_token(db: Session, user: User) -> dict[str, Any]:
@@ -349,6 +357,37 @@ def me(user: User = Depends(require_user)) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 # Profiles
 # --------------------------------------------------------------------------
+@app.get("/api/library")
+def read_library(user: User = Depends(require_user), db: Session = Depends(get_session)):
+    row = db.get(AccountLibrary, user.id)
+    return {"revision": row.revision if row else 0,
+            "charts": json.loads(row.charts_json) if row else []}
+
+
+@app.put("/api/library")
+def update_library(req: schemas.LibraryUpdate, user: User = Depends(require_user),
+                   db: Session = Depends(get_session)):
+    payload = json.dumps([c.model_dump() for c in req.charts])
+    # Atomic compare-and-swap prevents lost edits and resurrected deletions.
+    if req.revision == 0:
+        db.add(AccountLibrary(user_id=user.id, revision=1, charts_json=payload))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(409, "Your collection changed on another device. Refresh and try again.") from None
+    else:
+        changed = db.query(AccountLibrary).filter(
+            AccountLibrary.user_id == user.id,
+            AccountLibrary.revision == req.revision).update(
+                {"revision": req.revision + 1, "charts_json": payload})
+        if not changed:
+            db.rollback()
+            raise HTTPException(409, "Your collection changed on another device. Refresh and try again.")
+        db.commit()
+    return {"revision": req.revision + 1}
+
+
 @app.get("/api/profiles")
 def list_profiles(user: User = Depends(require_user),
                   db: Session = Depends(get_session)) -> dict[str, Any]:

@@ -1,6 +1,6 @@
 """Database setup and models.
 
-SQLite through SQLAlchemy. Birth profiles store *coordinates and the resolved
+SQLite locally or PostgreSQL through SQLAlchemy. Birth profiles store *coordinates and the resolved
 UTC offset*, not just a place name -- a chart must stay reproducible even if a
 geocoder later returns something different for the same string.
 """
@@ -18,8 +18,18 @@ DB_PATH = os.environ.get(
     "VEDIC_DB",
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                  "vedic.db"))
-ENGINE = create_engine(f"sqlite:///{DB_PATH}", echo=False,
-                       connect_args={"check_same_thread": False})
+def database_url() -> str:
+    url = os.environ.get("DATABASE_URL", "").strip()
+    if url.startswith("postgres://"):
+        url = "postgresql+psycopg://" + url[len("postgres://"):]
+    elif url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url or f"sqlite:///{DB_PATH}"
+
+
+DB_URL = database_url()
+ENGINE = create_engine(DB_URL, echo=False, pool_pre_ping=True,
+                       connect_args={"check_same_thread": False} if DB_URL.startswith("sqlite:") else {})
 SessionLocal = sessionmaker(bind=ENGINE, autoflush=False, expire_on_commit=False)
 
 
@@ -45,6 +55,22 @@ class User(Base):
                             cascade="all, delete-orphan")
     tokens = relationship("AuthToken", back_populates="user",
                           cascade="all, delete-orphan")
+
+
+class GoogleIdentity(Base):
+    __tablename__ = "google_identities"
+
+    subject = Column(String(255), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user = relationship("User")
+
+
+class AccountLibrary(Base):
+    __tablename__ = "account_libraries"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    revision = Column(Integer, nullable=False, default=0)
+    charts_json = Column(Text, nullable=False, default="[]")
 
 
 class AuthToken(Base):

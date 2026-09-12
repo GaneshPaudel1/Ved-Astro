@@ -8,6 +8,7 @@ import pytest
 
 # Point the app at a scratch database before it is imported.
 os.environ["VEDIC_DB"] = os.path.join(tempfile.gettempdir(), "vedic_test.db")
+os.environ.pop("DATABASE_URL", None)  # Never run destructive fixtures on a hosted DB.
 
 from fastapi.testclient import TestClient          # noqa: E402
 from app.main import app                            # noqa: E402
@@ -204,19 +205,26 @@ def test_profiles_require_authentication(client):
     assert client.post("/api/profiles", json=BIRTH).status_code == 401
 
 
-def test_register_login_and_profile_lifecycle(client):
-    reg = client.post("/api/auth/register", json={
-        "email": "Reader@Example.com", "password": "a-long-password",
-        "display_name": "Reader"})
+@pytest.fixture
+def google_login(client, monkeypatch):
+    from app import google_auth
+    def sign_in(email):
+        monkeypatch.setattr(google_auth, "verify_credential", lambda _: {
+            "sub": email.lower(), "email": email, "email_verified": True, "name": "Reader"})
+        return client.post("/api/auth/google", json={"credential": "test-credential"})
+    return sign_in
+
+
+def test_google_login_and_profile_lifecycle(client, google_login):
+    reg = google_login("Reader@Example.com")
     assert reg.status_code == 200
     token = reg.json()["token"]
     auth = {"Authorization": f"Bearer {token}"}
     assert reg.json()["user"]["email"] == "reader@example.com"
 
-    # Duplicate registration is refused.
-    assert client.post("/api/auth/register", json={
-        "email": "reader@example.com", "password": "a-long-password"}
-    ).status_code == 409
+    # Returning Google subject resolves to the same account.
+    again = google_login("Reader@Example.com")
+    assert again.json()["user"]["id"] == reg.json()["user"]["id"]
 
     me = client.get("/api/auth/me", headers=auth).json()
     assert me["email"] == "reader@example.com"
@@ -243,11 +251,9 @@ def test_register_login_and_profile_lifecycle(client):
     assert client.get(f"/api/profiles/{pid}", headers=auth).status_code == 404
 
 
-def test_users_cannot_read_each_others_profiles(client):
-    a = client.post("/api/auth/register", json={
-        "email": "one@example.com", "password": "a-long-password"}).json()
-    b = client.post("/api/auth/register", json={
-        "email": "two@example.com", "password": "a-long-password"}).json()
+def test_users_cannot_read_each_others_profiles(client, google_login):
+    a = google_login("one@example.com").json()
+    b = google_login("two@example.com").json()
     a_auth = {"Authorization": f"Bearer {a['token']}"}
     b_auth = {"Authorization": f"Bearer {b['token']}"}
 
@@ -260,15 +266,46 @@ def test_users_cannot_read_each_others_profiles(client):
     assert client.get(f"/api/profiles/{pid}", headers=a_auth).status_code == 200
 
 
-def test_login_rejects_a_wrong_password(client):
-    client.post("/api/auth/register", json={
-        "email": "three@example.com", "password": "a-long-password"})
-    assert client.post("/api/auth/login", json={
-        "email": "three@example.com", "password": "wrong-password"}).status_code == 401
-    assert client.post("/api/auth/login", json={
-        "email": "three@example.com", "password": "a-long-password"}).status_code == 200
+def test_password_endpoints_are_removed(client):
+    for path in ("login", "register"):
+        assert client.post(f"/api/auth/{path}", json={
+            "email": "legacy@example.com", "password": "a-long-password"}).status_code == 404
 
 
-def test_short_password_is_refused(client):
-    assert client.post("/api/auth/register", json={
-        "email": "four@example.com", "password": "short"}).status_code == 422
+def test_logout_revokes_token(client, google_login):
+    token = google_login("logout@example.com").json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    assert client.get("/api/auth/me", headers=headers).status_code == 200
+    assert client.post("/api/auth/logout", headers=headers).status_code == 200
+    assert client.get("/api/auth/me", headers=headers).status_code == 401
+
+
+def test_account_library_isolation_revision_and_deletion(client, google_login):
+    def headers(email):
+        return {"Authorization": "Bearer " + google_login(email).json()["token"]}
+    owner = headers("library-owner@example.com")
+    other = headers("library-other@example.com")
+    assert client.get("/api/library").status_code == 401
+    assert client.put("/api/library", json={"revision": 0, "charts": []}).status_code == 401
+    item = {"id": "chart-one", "birth": BIRTH, "savedAt": "2026-09-12T00:00:00Z"}
+    result = client.put("/api/library", headers=owner, json={"revision": 0, "charts": [item]})
+    assert result.status_code == 200
+    assert client.get("/api/library", headers=other).json()["charts"] == []
+    saved = client.get("/api/library", headers=owner).json()
+    assert saved["charts"][0]["birth"]["name"] == "Test"
+    assert client.put("/api/library", headers=owner, json={"revision": 0, "charts": []}).status_code == 409
+    item["birth"] = {**BIRTH, "name": "Updated"}
+    assert client.put("/api/library", headers=owner, json={"revision": 1, "charts": [item]}).status_code == 200
+    assert client.get("/api/library", headers=owner).json()["charts"][0]["birth"]["name"] == "Updated"
+    assert client.put("/api/library", headers=owner, json={"revision": 2, "charts": []}).status_code == 200
+    assert client.get("/api/library", headers=owner).json()["charts"] == []
+    assert client.put("/api/library", headers=owner, json={"revision": 2, "charts": [item]}).status_code == 409
+
+
+def test_database_url_selects_psycopg(monkeypatch):
+    from app.db import database_url
+    for prefix in ("postgres://", "postgresql://", "postgresql+psycopg://"):
+        monkeypatch.setenv("DATABASE_URL", prefix + "test:test@localhost/test?sslmode=require")
+        assert database_url() == "postgresql+psycopg://test:test@localhost/test?sslmode=require"
+    monkeypatch.delenv("DATABASE_URL")
+    assert database_url().startswith("sqlite:///")
