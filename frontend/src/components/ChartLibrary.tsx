@@ -49,7 +49,7 @@ export function ChartLibrary({ accountEmail, charts, activeId, busy, onNew, onLo
     {charts.length > 0 && <div className="library-search"><label htmlFor="chart-search" className="sr-only">Search saved charts</label><input id="chart-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name, place, or birth date…" /></div>}
     <div className="library-grid">
       {filtered.map((chart, i) => <article key={chart.id} className={`saved-chart saved-chart--${i % 3}${activeId === chart.id ? ' is-active' : ''}`}>
-        <div className="saved-chart__top"><span className="saved-chart__avatar" aria-hidden="true">{chart.birth.name.charAt(0).toUpperCase() || '✦'}</span><span className="saved-chart__badge">{activeId === chart.id ? 'Viewing now' : 'Saved chart'}</span></div>
+        <div className="saved-chart__top"><span className="saved-chart__avatar" aria-hidden="true">{chart.birth.name.charAt(0).toUpperCase() || '✦'}</span><span className="saved-chart__badge">{activeId === chart.id ? 'Last opened' : 'Saved chart'}</span></div>
         {editing === chart.id ? <form className="saved-chart__rename" onSubmit={e => { e.preventDefault(); if (name.trim()) { onRename(chart.id, name.trim()); setEditing(null) } }}>
           <label htmlFor={`rename-${chart.id}`}>Chart name</label><input id={`rename-${chart.id}`} value={name} onChange={e => setName(e.target.value)} maxLength={80} autoFocus required />
           <div className="cluster"><button className="btn btn--sm" disabled={busy || !name.trim()}>Save name</button><button type="button" className="btn btn--ghost btn--sm" onClick={() => setEditing(null)}>Cancel</button></div>

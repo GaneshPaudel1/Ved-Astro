@@ -6,7 +6,7 @@ declare global {
   interface Window {
     google?: { accounts: { id: {
       initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void
-      renderButton: (element: HTMLElement, options: { theme: string; size: string }) => void
+      renderButton: (element: HTMLElement, options: { theme: string; size: string; shape?: string; text?: string; width?: number }) => void
       disableAutoSelect: () => void
     } } }
   }
@@ -56,7 +56,7 @@ export function GoogleAccount({ user, onChange }: { user: Account | null; onChan
         finally { if (!cancelled) setBusy(false) }
       } })
       mount.current.replaceChildren()
-      window.google.accounts.id.renderButton(mount.current, { theme: 'outline', size: 'large' })
+      window.google.accounts.id.renderButton(mount.current, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 220 })
     }).catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : 'Sign-in unavailable.') })
     return () => { cancelled = true }
   }, [user, onChange, attempt])
@@ -66,8 +66,8 @@ export function GoogleAccount({ user, onChange }: { user: Account | null; onChan
     catch { setError('Could not sign out. Please retry.') }
     finally { setBusy(false) }
   }
-  return <div className="google-account">
-    {user ? <><span className="small">{user.display_name || user.email}</span><button className="btn btn--ghost btn--sm" disabled={busy} onClick={logout}>Sign out</button></> : <div ref={mount} />}
+  return <div className="google-account" id="google-account">
+    {user ? <div className="account-pill"><span className="account-avatar" aria-hidden="true">{(user.display_name || user.email).charAt(0).toUpperCase()}</span><div><strong>{user.display_name || user.email}</strong><span>Personal sanctuary</span></div><button className="account-signout" disabled={busy} onClick={logout}>Sign out <span aria-hidden="true">↗</span></button></div> : <div className="google-signin-mount" ref={mount} />}
     {busy && <span role="status" className="small">Connecting…</span>}
     {error && <div role="alert" className="small">{error} <button className="btn btn--ghost btn--sm" onClick={() => setAttempt(v => v + 1)}>Retry</button></div>}
   </div>

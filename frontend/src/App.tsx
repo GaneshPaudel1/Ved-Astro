@@ -10,12 +10,13 @@ import { TransitView } from './views/TransitView'
 import { PanchangView } from './views/PanchangView'
 import { MatchView } from './views/MatchView'
 import { ReadingView } from './views/ReadingView'
-import { CelestialHero, CosmicSnapshot } from './components/Celestial'
+import { CosmicSnapshot } from './components/Celestial'
 import { ChartLibrary, type SavedChart } from './components/ChartLibrary'
 import { useChartLibrary } from './components/useChartLibrary'
 import { AstroChat } from './components/AstroChat'
 import { GoogleAccount, type Account } from './components/GoogleAccount'
-import { DashboardWelcome } from './components/DashboardWelcome'
+import { HeritageHome, HeritageGarden } from './components/HeritageHome'
+import { ReadingWindow } from './components/ReadingWindow'
 import './app.css'
 import './styles/celestial.css'
 import './styles/workspace.css'
@@ -23,7 +24,7 @@ import './styles/immersive.css'
 import './styles/dreamscape.css'
 import './styles/realms.css'
 import './styles/dashboard.css'
-import { useCosmicTilt } from './components/CosmicScene'
+import './styles/heritage.css'
 
 const TAB_ICONS = ['◇', '✧', '◷', '✦', '♄', '☾', '♡', '≋']
 
@@ -42,8 +43,8 @@ type TabKey = (typeof TABS)[number]['key']
 
 const BLANK: BirthInput = {
   name: '',
-  date: '1990-05-05',
-  time: '10:30:00',
+  date: '',
+  time: null,
   latitude: 28.6139,
   longitude: 77.209,
   place: 'New Delhi, Delhi, India',
@@ -71,7 +72,6 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   const [motionPaused, setMotionPaused] = useState(() => {
     try { return localStorage.getItem('jyotish_motion_paused') === 'true' } catch { return false }
   })
-  useCosmicTilt(motionPaused)
   useEffect(() => {
     try { localStorage.setItem('jyotish_motion_paused', String(motionPaused)) } catch { /* Motion still works without storage. */ }
   }, [motionPaused])
@@ -82,6 +82,9 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   const [activeBirth, setActiveBirth] = useState<BirthInput>(BLANK)
   const [formVersion, setFormVersion] = useState(0)
   const [chatOpen, setChatOpen] = useState(false)
+  const [chartOpen, setChartOpen] = useState(false)
+  const [chartArrival, setChartArrival] = useState(0)
+  const [chatChartId, setChatChartId] = useState('')
   const [status, setStatus] = useState('')
   const [removed, setRemoved] = useState<SavedChart | null>(null)
   const requestId = useRef(0)
@@ -90,15 +93,11 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   const [tab, setTab] = useState<TabKey>('chart')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [theme, setTheme] = useState<'dark' | 'light'>(
-    () => (localStorage.getItem('jyotish_theme') as 'dark' | 'light') || 'dark',
-  )
   const [panelOpen, setPanelOpen] = useState(true)
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    localStorage.setItem('jyotish_theme', theme)
-  }, [theme])
+    document.documentElement.dataset.theme = 'light'
+  }, [])
 
   useEffect(() => {
     api.reference().then(setReference).catch(() => setReference(null))
@@ -108,9 +107,9 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
     if (activeId && !charts.some(c => c.id === activeId)) setActiveId(null)
   }, [charts, activeId])
 
-  const cast = async (userInitiated = true) => {
+  const cast = async () => {
     const currentRequest = ++requestId.current
-    const input = { ...birth, name: birth.name.trim() || (userInitiated ? 'Untitled chart' : '') }
+    const input = { ...birth, name: birth.name.trim() || 'Untitled chart' }
     setBusy(true)
     setError(null)
     try {
@@ -118,14 +117,13 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
       if (currentRequest !== requestId.current) return
       setBundle(b)
       setActiveBirth(input)
-      if (userInitiated) {
-        setBirth(input)
-        const id = activeId ?? crypto.randomUUID()
-        const saved = { id, birth: input, bundle: b, savedAt: new Date().toISOString() }
-        const next = activeId ? charts.map(c => c.id === id ? saved : c) : [saved, ...charts]
-        if (await persist(next)) { setActiveId(id); setStatus(`${input.name} saved to your collection.`) }
-        if (window.matchMedia('(max-width: 1023px)').matches) setPanelOpen(false)
-      }
+      setBirth(input)
+      const id = activeId ?? crypto.randomUUID()
+      const saved = { id, birth: input, bundle: b, savedAt: new Date().toISOString() }
+      const next = activeId ? charts.map(c => c.id === id ? saved : c) : [saved, ...charts]
+      if (await persist(next)) { setActiveId(id); setStatus(`${input.name} saved to your collection.`) }
+      setChartArrival(v => v + 1)
+      if (window.matchMedia('(max-width: 1023px)').matches) setPanelOpen(false)
     } catch (e) {
       if (currentRequest !== requestId.current) return
       setError(e instanceof ApiError ? e.message : 'Could not reach the calculation service.')
@@ -144,8 +142,8 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
     setPanelOpen(true)
     setTab('chart')
     setFormVersion(v => v + 1)
-    document.getElementById('chart-workspace')?.scrollIntoView({ behavior: 'smooth' })
-    window.setTimeout(() => document.getElementById('bf-name')?.focus({ preventScroll: true }), 100)
+    setChartOpen(true)
+    setChartArrival(v => v + 1)
   }
   const loadChart = (chart: SavedChart) => {
     ++requestId.current
@@ -157,8 +155,9 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
     setError(null)
     setTab('chart')
     setStatus(`${chart.birth.name} loaded from your collection.`)
-    setPanelOpen(true)
-    document.getElementById('chart-workspace')?.scrollIntoView({ behavior: 'smooth' })
+    setPanelOpen(!window.matchMedia('(max-width: 1023px)').matches)
+    setChartOpen(true)
+    setChartArrival(v => v + 1)
   }
   const renameChart = async (id: string, name: string) => {
     const next = charts.map(c => c.id === id ? { ...c, birth: { ...c.birth, name }, bundle: { ...c.bundle, name } } : c)
@@ -175,12 +174,10 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
     return true
   }
 
-  /* Cast the sample chart once on first load so the app is never a blank page. */
-  useEffect(() => {
-    cast(false)
-    return () => { ++requestId.current }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useEffect(() => () => { ++requestId.current }, [])
+
+  const chatChart = charts.find(c => c.id === chatChartId) ?? null
+  const openChat = (id = '') => { setChatChartId(id); setChatOpen(true) }
 
   const signNames = useMemo(
     () => reference?.signs.map((s) => s.name) ?? [],
@@ -188,8 +185,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   )
 
   return (
-    <div className={`app immersive${motionPaused ? ' motion-paused' : ''}`}>
-      <div className="space-atmosphere no-print" aria-hidden="true"><div className="nebula nebula--one" /><div className="nebula nebula--two" /><div className="space-dust" /></div>
+    <div className={`app heritage${motionPaused ? ' motion-paused' : ''}`}>
       <header className="topbar no-print">
         <div className="wrap topbar__inner">
           <div className="brand">
@@ -204,24 +200,13 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
 
           <div className="cluster">
             <GoogleAccount user={user} onChange={setUser} />
-            {user && <button className="btn btn--ghost btn--sm" aria-pressed={motionPaused} onClick={() => setMotionPaused(v => !v)}>{motionPaused ? 'Resume motion' : 'Pause motion'}</button>}
+            <button className="btn btn--ghost btn--sm motion-control" aria-pressed={motionPaused} onClick={() => setMotionPaused(v => !v)}>{motionPaused ? 'Resume motion' : 'Pause motion'}</button>
             <button className="btn topbar__library" onClick={() => document.getElementById('chart-library')?.scrollIntoView({ behavior: 'smooth' })}>◇ My charts <span>{charts.length}</span></button>
-            <button
-              className="btn btn--ghost btn--sm"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            >
-              {theme === 'dark' ? '☾' : '☀'}
-            </button>
           </div>
         </div>
       </header>
 
-      {user ? <DashboardWelcome user={user} charts={charts} busy={busy || library.loading || !library.ready} onNew={newChart} onLoad={loadChart} onChat={chart => { loadChart(chart); setChatOpen(true) }} /> : <CelestialHero paused={motionPaused} onToggleMotion={() => setMotionPaused(v => !v)} onBegin={() => {
-        setPanelOpen(true)
-        document.getElementById('chart-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        window.setTimeout(() => document.getElementById('bf-name')?.focus({ preventScroll: true }), 100)
-      }} />}
+      <HeritageHome user={user} count={charts.length} onNew={newChart} onChat={() => openChat()} />
       <ChartLibrary accountEmail={user?.email} charts={charts} activeId={activeId} busy={busy || library.loading || !library.ready} onNew={newChart} onLoad={loadChart} onRename={renameChart} onRemove={removeChart} />
       <div className="library-feedback wrap no-print">
         {user && <div className="cluster"><span className="small" role="status">{library.loading ? 'Syncing account charts…' : library.ready ? 'Account collection up to date' : 'Account sync unavailable'}</span><button className="btn btn--sm" disabled={busy || library.loading} onClick={() => library.refresh()}>Refresh account charts</button><button className="btn btn--sm" disabled={busy || library.loading || !library.ready} onClick={async () => { if (await library.importLocal()) setStatus('Browser charts imported into your account. The browser copies are still available when signed out.') }}>Import browser charts</button></div>}
@@ -230,7 +215,9 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
           if (await persist([removed, ...charts])) { setStatus(`${removed.birth.name} restored.`); setRemoved(null) }
         }}>Undo removal</button>}</div>}
       </div>
-      <div className="workspace-heading wrap no-print"><span>✦ YOUR CELESTIAL WORKSPACE</span><span>Ancient wisdom, a personal perspective</span></div>
+      <HeritageGarden onChat={() => openChat()} />
+      <ReadingWindow resetKey={chartArrival} open={chartOpen} onClose={() => setChartOpen(false)} title={activeId ? `${activeBirth.name} · Birth chart` : bundle ? `${activeBirth.name} · Unsaved chart` : 'Create a birth chart'} busy={busy || library.loading} className={motionPaused ? 'motion-paused' : ''}>
+      <div className="chart-arrival" key={chartArrival} role="status">{bundle ? `✦ ${activeBirth.name} is open. Your chart is ready to explore.` : '✧ A new story begins with birth details.'}</div>
       <main className="layout wrap" id="chart-workspace">
         <aside className={`panel no-print${panelOpen ? '' : ' is-collapsed'}`}>
           <div className="birth-portal" aria-hidden="true"><span>EVERY MOMENT HAS A SKY</span></div>
@@ -251,7 +238,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
               key={formVersion}
               value={birth}
               onChange={setBirth}
-              onSubmit={() => cast(true)}
+              onSubmit={() => cast()}
               reference={reference}
               busy={busy || library.loading || !library.ready}
               submitLabel={activeId ? '✦ Update saved chart' : '✦ Reveal & save chart'}
@@ -284,7 +271,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
 
           {bundle && (
             <>
-              <div className="chart-context no-print"><span>{activeId ? '◈ Saved chart' : '◇ Unsaved preview'}</span><button className="btn btn--sm" onClick={() => setChatOpen(true)}>✦ Ask about this chart <span className="demo-tag">AI</span></button></div>
+              <div className="chart-context no-print"><span>{activeId ? '◈ Saved chart' : '◇ Unsaved preview'}</span><button className="btn btn--sm" disabled={!activeId} onClick={() => openChat(activeId ?? '')}>✦ Ask about this chart <span className="demo-tag">AI</span></button></div>
               {JSON.stringify(birth) !== JSON.stringify(activeBirth) && <p className="notice notice--info">Birth details have changed. Reveal the chart to update the results below.</p>}
               <ChartHeader bundle={bundle} />
               <CosmicSnapshot bundle={bundle} />
@@ -342,9 +329,10 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
           )}
         </section>
       </main>
+      </ReadingWindow>
 
-      <AstroChat bundle={bundle} birth={activeBirth} userId={user?.id ?? null} chartKey={activeId ? `${activeId}:${bundle?.cache_key || activeBirth.date + activeBirth.time}` : bundle?.cache_key || 'new'} open={chatOpen} onClose={() => { setChatOpen(false); document.getElementById('chat-launcher')?.focus() }} />
-      <button id="chat-launcher" className="chat-launcher no-print" aria-expanded={chatOpen} onClick={() => setChatOpen(v => !v)}><span aria-hidden="true">✦</span> {chatOpen ? 'Close chat' : 'Ask the stars'} <span className="demo-tag">AI</span></button>
+      <AstroChat bundle={chatChart?.bundle ?? null} birth={chatChart?.birth ?? BLANK} userId={user?.id ?? null} chartKey={chatChart ? `${chatChart.id}:${chatChart.bundle.cache_key || JSON.stringify(chatChart.birth)}` : 'none'} charts={charts} selectedId={chatChart?.id ?? ''} onSelect={setChatChartId} open={chatOpen} onClose={() => setChatOpen(false)} motionPaused={motionPaused} />
+      <button id="chat-launcher" className="chat-launcher no-print" aria-expanded={chatOpen} onClick={() => openChat()}><span aria-hidden="true">✦</span> Ask the stars <span className="demo-tag">AI</span></button>
       <footer className="footer no-print">
         <div className="wrap">
           <div className="footer-invitation"><span>✦</span><h2>There is a universe in every story.</h2><p>Take your time. Get to know yours.</p></div>
