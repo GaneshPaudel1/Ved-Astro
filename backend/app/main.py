@@ -183,7 +183,7 @@ def timezone_lookup(latitude: float = Query(ge=-90, le=90),
 # Charts
 # --------------------------------------------------------------------------
 @app.post("/api/chart")
-def chart(req: schemas.ChartRequest) -> dict[str, Any]:
+def chart(req: schemas.ChartRequest, user: User = Depends(require_user)) -> dict[str, Any]:
     return services.build_bundle(
         name=req.name, date=req.date, time=req.time,
         latitude=req.latitude, longitude=req.longitude, place=req.place,

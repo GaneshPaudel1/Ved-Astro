@@ -9,6 +9,33 @@
   --shadow:0 8px 28px #6e472316; --shadow-lg:0 20px 65px #50351d25;
 }
 body { background:var(--bg); }
+.sanskrit-label { display:block; font-family:var(--font-deva); font-size:1.7rem; color:#8a5426; margin-bottom:15px; }
+.reading-window.signin-window { max-width:560px; height:fit-content; max-height:calc(100dvh - 24px); }
+.signin-invitation { padding:36px; text-align:center; background:linear-gradient(#fff7e8ed,#fff7e8ed),url('/art/temple-sanctuary-v1.webp') center/cover; }
+.signin-invitation h2 { font-size:2rem; margin-bottom:20px; }
+.signin-invitation p { margin:18px 0; line-height:1.8; }
+.signin-invitation .google-account { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.signin-invitation .google-account > [role='alert'] { padding:12px; border:1px solid #b78b55; border-radius:10px; background:#f5e5c7; text-align:left; }
+.chat-action-notice { display:flex; gap:12px; flex-shrink:0; margin:0 28px 12px; padding:14px 18px; border:2px solid #a66b28; border-radius:12px; background:#f5e3b8; color:#573711; }
+.chat-action-notice > span { font-size:1.7rem; }
+.chat-action-notice strong { font-size:.9rem; }
+.chat-action-notice p { margin:5px 0; font-size:.75rem; }
+.chat-action-notice button { background:#7d4926; color:#fff8e8; border:0; border-radius:6px; padding:7px 12px; font:600 .75rem var(--font-body); cursor:pointer; }
+.chat-sanctuary__guide .chart-select-required { border:2px solid #a66b28; box-shadow:0 0 0 3px #af76241a; }
+.chat-reply strong { color:#69411f; font-weight:750; }
+.chat-reply h3 { font-size:1.1rem; margin:20px 0 8px; color:#754b26; }
+.chat-thinking { display:flex; align-items:center; gap:14px; padding:20px; border:1px solid #d7b57a; background:#f6e8cc; border-radius:14px; margin-bottom:15px; }
+.chat-thinking strong { display:flex; align-items:center; gap:12px; color:#795024; font-size:1.15rem; }
+.chat-thinking p { font-size:.75rem; color:#765b37; margin:4px 0 0; }
+.thinking-mandala { color:#a36c25; font-size:2.5rem; animation:thinking-turn 8s linear infinite; }
+.thinking-dots { display:flex; gap:4px; }
+.thinking-dots i { width:4px; height:4px; background:currentColor; border-radius:50%; animation:thinking-glow 1.4s ease-in-out infinite; }
+.thinking-dots i:nth-child(2) { animation-delay:.2s; }
+.thinking-dots i:nth-child(3) { animation-delay:.4s; }
+@keyframes thinking-turn { to { transform:rotate(360deg); } }
+@keyframes thinking-glow { 50% { opacity:.25; transform:translateY(-3px); } }
+@media(max-width:640px) { .signin-window { width:calc(100vw - 24px)!important; height:fit-content!important; border-radius:18px!important; }.signin-invitation { padding:24px; }.chat-action-notice { margin:0 15px 8px; padding:10px 12px; }.chat-action-notice strong { font-size:.8rem; }.chat-action-notice p { font-size:.68rem; } }
+@media(prefers-reduced-motion:reduce) { .thinking-mandala,.thinking-dots i { animation:none; } }
 .heritage { background:radial-gradient(ellipse at 15% 25%,#f0d9ac55,transparent 60%),#f5ebd7; }
 .heritage .topbar { background:#faf2e2f5; border-bottom:1px solid #c5a57666; backdrop-filter:blur(16px); }
 .heritage .topbar__inner { min-height:88px; gap:20px; }

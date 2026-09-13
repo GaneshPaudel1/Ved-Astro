@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api, ApiError } from './api/client'
 import type { BirthInput, Bundle, Reference } from './api/types'
 import { BirthForm } from './components/BirthForm'
@@ -56,6 +56,13 @@ const BLANK: BirthInput = {
 
 export default function App() {
   const [user, setUser] = useState<Account | null>(null)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [createAfterLogin, setCreateAfterLogin] = useState(false)
+  const changeUser = useCallback((account: Account | null) => {
+    setUser(account)
+    setAuthOpen(false)
+    if (!account) setCreateAfterLogin(false)
+  }, [])
   useEffect(() => {
     const syncSession = (event: StorageEvent) => {
       if (event.key !== 'jyotish_token' && event.key !== null) return
@@ -65,10 +72,15 @@ export default function App() {
     window.addEventListener('storage', syncSession)
     return () => window.removeEventListener('storage', syncSession)
   }, [])
-  return <Workspace key={user?.id ?? 'guest'} user={user} setUser={setUser} />
+  return <>
+    <Workspace key={user?.id ?? 'guest'} user={user} setUser={changeUser} authOpen={authOpen} startWithChart={!!user && createAfterLogin} onRequireSignIn={() => { setCreateAfterLogin(true); setAuthOpen(true) }} />
+    <ReadingWindow open={authOpen && !user} onClose={() => { setAuthOpen(false); setCreateAfterLogin(false) }} title="Sign in to begin" className="signin-window">
+      <div className="signin-invitation"><span className="sanskrit-label" lang="sa">स्वागतम्</span><h2>Your story deserves<br />a place of its own.</h2><p><strong>Sign in with Google to create your birth chart.</strong> Keep your charts together and return to them on any device.</p>{authOpen && !user && <GoogleAccount user={null} onChange={changeUser} />}<p className="small muted">One Google account. No password or registration form here.</p></div>
+    </ReadingWindow>
+  </>
 }
 
-function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Account | null) => void }) {
+function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }: { user: Account | null; setUser: (user: Account | null) => void; authOpen: boolean; startWithChart: boolean; onRequireSignIn: () => void }) {
   const [motionPaused, setMotionPaused] = useState(() => {
     try { return localStorage.getItem('jyotish_motion_paused') === 'true' } catch { return false }
   })
@@ -82,7 +94,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   const [activeBirth, setActiveBirth] = useState<BirthInput>(BLANK)
   const [formVersion, setFormVersion] = useState(0)
   const [chatOpen, setChatOpen] = useState(false)
-  const [chartOpen, setChartOpen] = useState(false)
+  const [chartOpen, setChartOpen] = useState(startWithChart)
   const [chartArrival, setChartArrival] = useState(0)
   const [chatChartId, setChatChartId] = useState('')
   const [status, setStatus] = useState('')
@@ -108,6 +120,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   }, [charts, activeId])
 
   const cast = async () => {
+    if (!user) { onRequireSignIn(); return }
     const currentRequest = ++requestId.current
     const input = { ...birth, name: birth.name.trim() || 'Untitled chart' }
     setBusy(true)
@@ -133,6 +146,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
   }
 
   const newChart = () => {
+    if (!user) { onRequireSignIn(); return }
     ++requestId.current
     setBirth({ ...BLANK, date: '', time: null })
     setBundle(null)
@@ -199,7 +213,7 @@ function Workspace({ user, setUser }: { user: Account | null; setUser: (user: Ac
           </div>
 
           <div className="cluster">
-            <GoogleAccount user={user} onChange={setUser} />
+            {!authOpen && <GoogleAccount user={user} onChange={setUser} />}
             <button className="btn btn--ghost btn--sm motion-control" aria-pressed={motionPaused} onClick={() => setMotionPaused(v => !v)}>{motionPaused ? 'Resume motion' : 'Pause motion'}</button>
             <button className="btn topbar__library" onClick={() => document.getElementById('chart-library')?.scrollIntoView({ behavior: 'smooth' })}>◇ My charts <span>{charts.length}</span></button>
           </div>

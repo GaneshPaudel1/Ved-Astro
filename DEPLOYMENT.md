@@ -89,3 +89,5 @@ lists free-tier availability per model; verify your project's quota in AI Studio
 The app does not enable paid billing or automatically switch models. Google may
 use free-tier prompts and responses to improve its products; avoid entering
 private information into test conversations.
+
+Chart creation now requires Google sign-in, including POST /api/chart. Deploy both the backend and frontend for this change. Existing guest charts can still be viewed and imported after sign-in; new anonymous charts cannot be calculated.

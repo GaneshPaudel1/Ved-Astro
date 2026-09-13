@@ -52,8 +52,8 @@ def test_reference_tables_are_complete(client):
 # --------------------------------------------------------------------------
 # Chart
 # --------------------------------------------------------------------------
-def test_chart_returns_every_section(client):
-    b = client.post("/api/chart", json=BIRTH).json()
+def test_chart_returns_every_section(client, chart_auth):
+    b = client.post("/api/chart", headers=chart_auth, json=BIRTH).json()
     for key in ("chart", "vargas", "dasha", "yogas", "ashtakavarga",
                 "doshas", "transits", "interpretation", "nakshatra_detail"):
         assert key in b, key
@@ -63,15 +63,15 @@ def test_chart_returns_every_section(client):
     assert b["ashtakavarga"]["sav_total"] == 337
 
 
-def test_chart_include_filter_trims_the_payload(client):
-    b = client.post("/api/chart", json={**BIRTH, "include": ["dasha"]}).json()
+def test_chart_include_filter_trims_the_payload(client, chart_auth):
+    b = client.post("/api/chart", headers=chart_auth, json={**BIRTH, "include": ["dasha"]}).json()
     assert "dasha" in b
     assert "vargas" not in b
     assert "ashtakavarga" not in b
 
 
-def test_chart_without_time_flags_lagna_uncertain(client):
-    b = client.post("/api/chart", json={**BIRTH, "time": None}).json()
+def test_chart_without_time_flags_lagna_uncertain(client, chart_auth):
+    b = client.post("/api/chart", headers=chart_auth, json={**BIRTH, "time": None}).json()
     c = b["chart"]
     assert c["time_known"] is False
     assert c["ascendant"] is None
@@ -83,10 +83,10 @@ def test_chart_without_time_flags_lagna_uncertain(client):
     assert "lagna-uncertain" in lagna["tags"]
 
 
-def test_ayanamsa_switch_changes_the_result(client):
-    a = client.post("/api/chart", json={**BIRTH, "ayanamsa": "lahiri",
+def test_ayanamsa_switch_changes_the_result(client, chart_auth):
+    a = client.post("/api/chart", headers=chart_auth, json={**BIRTH, "ayanamsa": "lahiri",
                                         "include": ["chart"]}).json()
-    b = client.post("/api/chart", json={**BIRTH, "ayanamsa": "raman",
+    b = client.post("/api/chart", headers=chart_auth, json={**BIRTH, "ayanamsa": "raman",
                                         "include": ["chart"]}).json()
     assert a["chart"]["ayanamsa_value"] != b["chart"]["ayanamsa_value"]
     assert a["chart"]["planets"]["Sun"]["longitude"] != b["chart"]["planets"]["Sun"]["longitude"]
@@ -103,14 +103,14 @@ def test_ayanamsa_switch_changes_the_result(client):
     ({"ayanamsa": "nonsense"}, "ayanamsa"),
     ({"house_system": "nonsense"}, "house_system"),
 ])
-def test_invalid_input_is_rejected(client, payload, field):
-    r = client.post("/api/chart", json={**BIRTH, **payload})
+def test_invalid_input_is_rejected(client, chart_auth, payload, field):
+    r = client.post("/api/chart", headers=chart_auth, json={**BIRTH, **payload})
     assert r.status_code == 422, f"{field} should have been rejected"
 
 
-def test_caching_returns_an_equivalent_chart(client):
-    a = client.post("/api/chart", json=BIRTH).json()
-    b = client.post("/api/chart", json=BIRTH).json()
+def test_caching_returns_an_equivalent_chart(client, chart_auth):
+    a = client.post("/api/chart", headers=chart_auth, json=BIRTH).json()
+    b = client.post("/api/chart", headers=chart_auth, json=BIRTH).json()
     assert b["cached"] is True
     assert a["chart"]["planets"] == b["chart"]["planets"]
     # The live parts must still be recomputed, not frozen.
@@ -309,3 +309,16 @@ def test_database_url_selects_psycopg(monkeypatch):
         assert database_url() == "postgresql+psycopg://test:test@localhost/test?sslmode=require"
     monkeypatch.delenv("DATABASE_URL")
     assert database_url().startswith("sqlite:///")
+
+
+@pytest.fixture
+def chart_auth(google_login):
+    response = google_login("chart-reader@example.com")
+    assert response.status_code == 200
+    return {"Authorization": f"Bearer {response.json()['token']}"}
+
+
+def test_chart_requires_google_sign_in(client):
+    assert client.post("/api/chart", json=BIRTH).status_code == 401
+    assert client.post("/api/chart", json=BIRTH,
+                       headers={"Authorization": "Bearer invalid-session"}).status_code == 401
