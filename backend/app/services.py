@@ -229,7 +229,13 @@ def build_match(a: dict[str, Any], b: dict[str, Any],
             name=person.get("name", ""), date=person["date"],
             time=person.get("time"), latitude=person["latitude"],
             longitude=person["longitude"], place=person.get("place", ""),
-            ayanamsa=ayanamsa, include={"doshas"}))
+            ayanamsa=ayanamsa,
+            house_system=person.get("house_system", "whole_sign"),
+            node_type=person.get("node_type", "mean"),
+            time_standard=person.get("time_standard", "auto"),
+            tz_name=person.get("tz_name"),
+            utc_offset_override=person.get("utc_offset_override"),
+            include={"doshas"}))
 
     a_chart, b_chart = bundles[0]["chart"], bundles[1]["chart"]
     a_label = a.get("name") or "First person"

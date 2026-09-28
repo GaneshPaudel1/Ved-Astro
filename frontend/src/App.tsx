@@ -8,14 +8,16 @@ import { DashaView } from './views/DashaView'
 import { StrengthView } from './views/StrengthView'
 import { TransitView } from './views/TransitView'
 import { PanchangView } from './views/PanchangView'
-import { MatchView } from './views/MatchView'
+import { MatchmakingPage } from './components/MatchmakingPage'
 import { ReadingView } from './views/ReadingView'
 import { CosmicSnapshot } from './components/Celestial'
 import { ChartLibrary, type SavedChart } from './components/ChartLibrary'
 import { useChartLibrary } from './components/useChartLibrary'
+import { ChartReport } from './components/ChartReport'
+import './styles/report.css'
 import { AstroChat } from './components/AstroChat'
 import { GoogleAccount, type Account } from './components/GoogleAccount'
-import { HeritageHome, HeritageGarden } from './components/HeritageHome'
+import { HeritageHome, HeritageGarden, HeritageFeatures } from './components/HeritageHome'
 import { ReadingWindow } from './components/ReadingWindow'
 import './app.css'
 import './styles/celestial.css'
@@ -25,8 +27,11 @@ import './styles/dreamscape.css'
 import './styles/realms.css'
 import './styles/dashboard.css'
 import './styles/heritage.css'
+import './styles/home-refresh.css'
+import './styles/kundali-refresh.css'
+import './styles/matchmaking.css'
 
-const TAB_ICONS = ['◇', '✧', '◷', '✦', '♄', '☾', '♡', '≋']
+const TAB_ICONS = ['◇', '✧', '◷', '✦', '♄', '☾', '≋']
 
 const TABS = [
   { key: 'chart', label: 'Chart' },
@@ -35,7 +40,6 @@ const TABS = [
   { key: 'strength', label: 'Yogas & Doshas' },
   { key: 'transits', label: 'Transits' },
   { key: 'panchang', label: 'Panchang' },
-  { key: 'match', label: 'Matching' },
   { key: 'reading', label: 'Reading' },
 ] as const
 
@@ -44,10 +48,10 @@ type TabKey = (typeof TABS)[number]['key']
 const BLANK: BirthInput = {
   name: '',
   date: '',
-  time: null,
-  latitude: 28.6139,
-  longitude: 77.209,
-  place: 'New Delhi, Delhi, India',
+  time: '',
+  latitude: NaN,
+  longitude: NaN,
+  place: '',
   ayanamsa: 'lahiri',
   house_system: 'whole_sign',
   node_type: 'mean',
@@ -81,20 +85,18 @@ export default function App() {
 }
 
 function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }: { user: Account | null; setUser: (user: Account | null) => void; authOpen: boolean; startWithChart: boolean; onRequireSignIn: () => void }) {
-  const [motionPaused, setMotionPaused] = useState(() => {
-    try { return localStorage.getItem('jyotish_motion_paused') === 'true' } catch { return false }
-  })
-  useEffect(() => {
-    try { localStorage.setItem('jyotish_motion_paused', String(motionPaused)) } catch { /* Motion still works without storage. */ }
-  }, [motionPaused])
+  const motionPaused = false
   const [birth, setBirth] = useState<BirthInput>(BLANK)
   const library = useChartLibrary(user?.id ?? null)
   const { charts, error: libraryError, persist } = library
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeBirth, setActiveBirth] = useState<BirthInput>(BLANK)
   const [formVersion, setFormVersion] = useState(0)
-  const [chatOpen, setChatOpen] = useState(false)
-  const [chartOpen, setChartOpen] = useState(startWithChart)
+  const [matchOpen, setMatchOpen] = useState(window.location.hash === '#matchmaking')
+  const [reportOpen, setReportOpen] = useState(window.location.hash === '#reports')
+  const [reportChartId, setReportChartId] = useState('')
+  const [chatOpen, setChatOpen] = useState(window.location.hash === '#guide')
+  const [chartOpen, setChartOpen] = useState(startWithChart || (!!user && window.location.hash === '#chart'))
   const [chartArrival, setChartArrival] = useState(0)
   const [chatChartId, setChatChartId] = useState('')
   const [status, setStatus] = useState('')
@@ -106,6 +108,28 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(true)
+  useEffect(() => {
+    if (panelOpen && bundle && chartOpen) document.getElementById('birth-editor')?.scrollIntoView({ block: 'start' })
+  }, [panelOpen, chartOpen])
+  const leaveChart = () => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    setChartOpen(false)
+    setChatOpen(false)
+    setReportOpen(false)
+    setMatchOpen(false)
+    window.scrollTo(0, 0)
+  }
+  useEffect(() => {
+    if (!chartOpen) return
+    if (window.location.hash !== '#chart') window.history.pushState(null, '', '#chart')
+    window.scrollTo(0, 0)
+  }, [chartOpen, chartArrival])
+  useEffect(() => {
+    const followHistory = () => { setMatchOpen(window.location.hash === '#matchmaking'); setReportOpen(window.location.hash === '#reports'); setChatOpen(window.location.hash === '#guide'); setChartOpen(window.location.hash === '#chart' && !!user); window.scrollTo(0, 0) }
+    window.addEventListener('popstate', followHistory)
+    return () => window.removeEventListener('popstate', followHistory)
+  }, [user])
+
 
   useEffect(() => {
     document.documentElement.dataset.theme = 'light'
@@ -136,7 +160,7 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
       const next = activeId ? charts.map(c => c.id === id ? saved : c) : [saved, ...charts]
       if (await persist(next)) { setActiveId(id); setStatus(`${input.name} saved to your collection.`) }
       setChartArrival(v => v + 1)
-      if (window.matchMedia('(max-width: 1023px)').matches) setPanelOpen(false)
+      setPanelOpen(false)
     } catch (e) {
       if (currentRequest !== requestId.current) return
       setError(e instanceof ApiError ? e.message : 'Could not reach the calculation service.')
@@ -148,7 +172,7 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
   const newChart = () => {
     if (!user) { onRequireSignIn(); return }
     ++requestId.current
-    setBirth({ ...BLANK, date: '', time: null })
+    setBirth({ ...BLANK })
     setBundle(null)
     setActiveId(null)
     setError(null)
@@ -156,6 +180,9 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
     setPanelOpen(true)
     setTab('chart')
     setFormVersion(v => v + 1)
+    setReportOpen(false)
+    setMatchOpen(false)
+    setChatOpen(false)
     setChartOpen(true)
     setChartArrival(v => v + 1)
   }
@@ -169,7 +196,10 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
     setError(null)
     setTab('chart')
     setStatus(`${chart.birth.name} loaded from your collection.`)
-    setPanelOpen(!window.matchMedia('(max-width: 1023px)').matches)
+    setPanelOpen(false)
+    setReportOpen(false)
+    setMatchOpen(false)
+    setChatOpen(false)
     setChartOpen(true)
     setChartArrival(v => v + 1)
   }
@@ -191,7 +221,9 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
   useEffect(() => () => { ++requestId.current }, [])
 
   const chatChart = charts.find(c => c.id === chatChartId) ?? null
-  const openChat = (id = '') => { setChatChartId(id); setChatOpen(true) }
+  const openMatch = () => { setChartOpen(false); setChatOpen(false); setReportOpen(false); setMatchOpen(true); if (window.location.hash !== '#matchmaking') window.history.pushState(null, '', '#matchmaking'); window.scrollTo(0,0) }
+  const openReport = (id = '') => { setMatchOpen(false); setReportChartId(id); setChartOpen(false); setChatOpen(false); setReportOpen(true); if (window.location.hash !== '#reports') window.history.pushState(null, '', '#reports'); window.scrollTo(0, 0) }
+  const openChat = (id = '') => { setMatchOpen(false); setReportOpen(false); setChatChartId(id); setChartOpen(false); setChatOpen(true); if (window.location.hash !== '#guide') window.history.pushState(null, '', '#guide'); window.scrollTo(0, 0) }
 
   const signNames = useMemo(
     () => reference?.signs.map((s) => s.name) ?? [],
@@ -214,14 +246,17 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
 
           <div className="cluster">
             {!authOpen && <GoogleAccount user={user} onChange={setUser} />}
-            <button className="btn btn--ghost btn--sm motion-control" aria-pressed={motionPaused} onClick={() => setMotionPaused(v => !v)}>{motionPaused ? 'Resume motion' : 'Pause motion'}</button>
-            <button className="btn topbar__library" onClick={() => document.getElementById('chart-library')?.scrollIntoView({ behavior: 'smooth' })}>◇ My charts <span>{charts.length}</span></button>
+            <button className="btn btn--sm topbar__match" aria-current={matchOpen ? 'page' : undefined} onClick={openMatch}>Matchmaking</button>
+            <button className="btn btn--sm topbar__guide" onClick={() => openChat()}>Chart Guide</button>
+            <button className="btn btn--sm topbar__reports" aria-current={reportOpen ? 'page' : undefined} onClick={() => openReport()}>Detailed Reports</button>
+            <button className="btn topbar__library" onClick={() => { if (chartOpen || chatOpen || reportOpen || matchOpen) leaveChart(); else document.getElementById('chart-library')?.scrollIntoView({ behavior: 'smooth' }) }}>◇ My charts <span>{charts.length}</span></button>
           </div>
         </div>
       </header>
 
-      <HeritageHome user={user} count={charts.length} onNew={newChart} onChat={() => openChat()} />
-      <ChartLibrary accountEmail={user?.email} charts={charts} activeId={activeId} busy={busy || library.loading || !library.ready} onNew={newChart} onLoad={loadChart} onRename={renameChart} onRemove={removeChart} />
+      {!chartOpen && !chatOpen && !reportOpen && !matchOpen && <>
+      <HeritageHome user={user} count={charts.length} onNew={newChart} onChat={() => openChat()} onReport={() => openReport()} onMatch={openMatch} />
+      <ChartLibrary accountEmail={user?.email} charts={charts} activeId={activeId} busy={busy || library.loading || !library.ready} onNew={newChart} onReport={openReport} onLoad={loadChart} onRename={renameChart} onRemove={removeChart} />
       <div className="library-feedback wrap no-print">
         {user && <div className="cluster"><span className="small" role="status">{library.loading ? 'Syncing account charts…' : library.ready ? 'Account collection up to date' : 'Account sync unavailable'}</span><button className="btn btn--sm" disabled={busy || library.loading} onClick={() => library.refresh()}>Refresh account charts</button><button className="btn btn--sm" disabled={busy || library.loading || !library.ready} onClick={async () => { if (await library.importLocal()) setStatus('Browser charts imported into your account. The browser copies are still available when signed out.') }}>Import browser charts</button></div>}
         {libraryError && <p className="notice notice--warn" role="alert">{libraryError}</p>}
@@ -229,11 +264,14 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
           if (await persist([removed, ...charts])) { setStatus(`${removed.birth.name} restored.`); setRemoved(null) }
         }}>Undo removal</button>}</div>}
       </div>
+      <HeritageFeatures onChat={() => openChat()} onReport={() => openReport()} onMatch={openMatch} />
       <HeritageGarden onChat={() => openChat()} />
-      <ReadingWindow resetKey={chartArrival} open={chartOpen} onClose={() => setChartOpen(false)} title={activeId ? `${activeBirth.name} · Birth chart` : bundle ? `${activeBirth.name} · Unsaved chart` : 'Create a birth chart'} busy={busy || library.loading} className={motionPaused ? 'motion-paused' : ''}>
-      <div className="chart-arrival" key={chartArrival} role="status">{bundle ? `✦ ${activeBirth.name} is open. Your chart is ready to explore.` : '✧ A new story begins with birth details.'}</div>
-      <main className="layout wrap" id="chart-workspace">
-        <aside className={`panel no-print${panelOpen ? '' : ' is-collapsed'}`}>
+      </>}
+      {chartOpen && <section className={`reading-window chart-page${!bundle ? ' chart-page--create' : ''}${motionPaused ? ' motion-paused' : ''}`}>
+      <div className="chart-page__heading wrap"><button className="btn btn--ghost" onClick={leaveChart} disabled={busy}>← Back to my charts</button><p className="eyebrow" lang="sa">जन्मकुण्डली</p><h1>{bundle ? activeBirth.name : 'Create your birth chart'}</h1>{!bundle && <p>A few details about the moment your story began.</p>}</div>
+      {bundle && <div className="chart-arrival" key={chartArrival} role="status">{bundle ? `✦ ${activeBirth.name} is open. Your chart is ready to explore.` : '✧ A new story begins with birth details.'}</div>}
+      <main className={`layout wrap${bundle ? ' kundali-layout' : ''}${bundle && panelOpen ? ' kundali-layout--editing' : ''}`} id="chart-workspace">
+        <aside id="birth-editor" hidden={!!bundle && !panelOpen} className={`panel no-print${panelOpen ? '' : ' is-collapsed'}`}>
           <div className="birth-portal" aria-hidden="true"><span>EVERY MOMENT HAS A SKY</span></div>
           <div className="panel__head">
             <h2 className="panel__title"><span aria-hidden="true">✧</span> Birth details</h2>
@@ -242,7 +280,7 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
               onClick={() => setPanelOpen((v) => !v)}
               aria-expanded={panelOpen}
             >
-              {panelOpen ? 'Hide' : 'Edit'}
+              {panelOpen ? 'Done editing' : 'Edit birth details'}
             </button>
           </div>
 
@@ -250,6 +288,7 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
           {panelOpen && (
             <BirthForm
               key={formVersion}
+              simple
               value={birth}
               onChange={setBirth}
               onSubmit={() => cast()}
@@ -276,6 +315,7 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
         </aside>
 
         <section className="content" aria-busy={busy}>
+          {libraryError && <p className="notice notice--warn" role="alert">{libraryError}</p>}
           {error && (
             <div className="notice notice--warn" role="alert">
               <span className="notice__mark">!</span>
@@ -285,10 +325,10 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
 
           {bundle && (
             <>
-              <div className="chart-context no-print"><span>{activeId ? '◈ Saved chart' : '◇ Unsaved preview'}</span><button className="btn btn--sm" disabled={!activeId} onClick={() => openChat(activeId ?? '')}>✦ Ask about this chart <span className="demo-tag">AI</span></button></div>
+              <div className="chart-context no-print"><button className="btn btn--sm" aria-expanded={panelOpen} onClick={() => setPanelOpen(v => !v)}>{panelOpen ? 'Close editor' : 'Edit birth details'}</button><button className="btn btn--sm" disabled={!activeId} onClick={() => openReport(activeId ?? '')}>Read full report</button><span>{activeId ? '◈ Saved chart' : '◇ Unsaved preview'}</span><button className="btn btn--sm" disabled={!activeId} onClick={() => openChat(activeId ?? '')}>✦ Explore with Chart Guide</button></div>
               {JSON.stringify(birth) !== JSON.stringify(activeBirth) && <p className="notice notice--info">Birth details have changed. Reveal the chart to update the results below.</p>}
               <ChartHeader bundle={bundle} />
-              <CosmicSnapshot bundle={bundle} />
+              <details className="kundali-snapshot"><summary>Your chart at a glance <span>Ascendant, Moon & planetary themes</span></summary><CosmicSnapshot bundle={bundle} /></details>
 
               <nav className="tabs no-print" role="tablist" aria-label="Chart sections">
                 {TABS.map((t, i) => (
@@ -328,7 +368,6 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
                   <TransitView bundle={bundle} birth={activeBirth} signNames={signNames} />
                 )}
                 {tab === 'panchang' && <PanchangView birth={activeBirth} />}
-                {tab === 'match' && <MatchView primary={activeBirth} reference={reference} />}
                 {tab === 'reading' && <ReadingView bundle={bundle} />}
               </div>
             </>
@@ -343,11 +382,12 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
           )}
         </section>
       </main>
-      </ReadingWindow>
+      </section>}
 
-      <AstroChat bundle={chatChart?.bundle ?? null} birth={chatChart?.birth ?? BLANK} userId={user?.id ?? null} chartKey={chatChart ? `${chatChart.id}:${chatChart.bundle.cache_key || JSON.stringify(chatChart.birth)}` : 'none'} charts={charts} selectedId={chatChart?.id ?? ''} onSelect={setChatChartId} open={chatOpen} onClose={() => setChatOpen(false)} motionPaused={motionPaused} />
-      <button id="chat-launcher" className="chat-launcher no-print" aria-expanded={chatOpen} onClick={() => openChat()}><span aria-hidden="true">✦</span> Ask the stars <span className="demo-tag">AI</span></button>
-      <footer className="footer no-print">
+      {matchOpen && <MatchmakingPage charts={charts} loading={library.loading} libraryError={libraryError} onBack={leaveChart} onNew={newChart} onRetry={() => library.refresh()} />}
+      {reportOpen && <ChartReport charts={charts} selectedId={reportChartId} onSelect={setReportChartId} onBack={leaveChart} onGuide={openChat} loading={library.loading} error={libraryError} onRetry={() => library.refresh()} />}
+      <AstroChat bundle={chatChart?.bundle ?? null} birth={chatChart?.birth ?? BLANK} userId={user?.id ?? null} chartKey={chatChart ? `${chatChart.id}:${chatChart.bundle.cache_key || JSON.stringify(chatChart.birth)}` : 'none'} charts={charts} selectedId={chatChart?.id ?? ''} onSelect={setChatChartId} open={chatOpen} onClose={leaveChart} motionPaused={motionPaused} />
+      {!chatOpen && !reportOpen && !matchOpen && <footer className="footer no-print">
         <div className="wrap">
           <div className="footer-invitation"><span>✦</span><h2>There is a universe in every story.</h2><p>Take your time. Get to know yours.</p></div>
           <p className="tiny dim">
@@ -356,7 +396,7 @@ function Workspace({ user, setUser, authOpen, startWithChart, onRequireSignIn }:
             not events, and not medical, legal or financial advice.
           </p>
         </div>
-      </footer>
+      </footer>}
     </div>
   )
 }
@@ -370,15 +410,7 @@ function ChartHeader({ bundle }: { bundle: Bundle }) {
         <p className="eyebrow">
           {c.time_known ? 'Rashi chart · D1' : 'Partial chart · time unknown'}
         </p>
-        <h1>
-          {bundle.name || 'Sample birth chart'}
-          {c.ascendant_sign_name && (
-            <span className="chartheader__asc">
-              {' '}
-              <span className="dim">·</span> {c.ascendant_sign_name} rising
-            </span>
-          )}
-        </h1>
+        <h2>{c.ascendant_sign_name ? `${c.ascendant_sign_name} rising` : 'Your planetary placements'}</h2>
         <p className="chartheader__meta small muted">
           <span className="mono">{c.moment.local.slice(0, 10)}</span>
           {c.time_known && (
@@ -394,7 +426,7 @@ function ChartHeader({ bundle }: { bundle: Bundle }) {
         </p>
       </div>
 
-      <dl className="chartheader__stats">
+      <details className="chartheader-technical"><summary>Calculation details · ayanamsha, ascendant & Moon</summary><dl className="chartheader__stats">
         <div>
           <dt>Ayanamsa</dt>
           <dd className="mono">{c.ayanamsa_str}</dd>
@@ -418,7 +450,7 @@ function ChartHeader({ bundle }: { bundle: Bundle }) {
             {c.planets.Moon.nakshatra_name} pada {c.planets.Moon.pada}
           </dd>
         </div>
-      </dl>
+      </dl></details>
 
       {c.warnings.length > 0 && (
         <div className="chartheader__warnings">
@@ -457,7 +489,6 @@ function RealmBanner({ section }: { section: Exclude<TabKey, 'chart'> }) {
     strength: { art: 'sun', title: 'Patterns of possibility', note: 'Discover the planetary combinations recorded in your chart.' },
     transits: { art: 'rising', title: 'A sky that never stands still', note: 'Explore planetary movements in relation to your birth chart.' },
     panchang: { art: 'moon', title: 'Tune into the rhythm of the day', note: 'Explore the five elements of the traditional Vedic calendar.' },
-    match: { art: 'moon', title: 'When two universes meet', note: 'Explore traditional compatibility through two birth charts.' },
     reading: { art: 'moon', title: 'A little closer to yourself', note: 'Reflect on the interpretations associated with your placements.' },
   }
   const realm = realms[section]

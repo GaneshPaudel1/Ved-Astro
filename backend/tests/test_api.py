@@ -180,6 +180,20 @@ def test_match_endpoint(client):
     assert r["caveat"]
 
 
+def test_match_preserves_saved_birth_timezone(client):
+    from app.services import build_bundle
+
+    first = {**BIRTH, "name": "Groom", "utc_offset_override": -5.0}
+    second = {**BIRTH, "name": "Bride", "utc_offset_override": 5.5}
+    response = client.post("/api/match", json={"first": first, "second": second})
+    assert response.status_code == 200
+    result = response.json()
+    for person in (first, second):
+        expected = build_bundle(**person)["chart"]["planets"]["Moon"]
+        assert result["charts"][person["name"]]["moon_degree"] == expected["degree_str"]
+    assert result["charts"]["Groom"]["moon_degree"] != result["charts"]["Bride"]["moon_degree"]
+
+
 def test_geocode_builtin_works_offline(client):
     r = client.get("/api/geocode", params={"q": "Porbandar"}).json()
     assert r["results"]
@@ -322,3 +336,15 @@ def test_chart_requires_google_sign_in(client):
     assert client.post("/api/chart", json=BIRTH).status_code == 401
     assert client.post("/api/chart", json=BIRTH,
                        headers={"Authorization": "Bearer invalid-session"}).status_code == 401
+
+
+def test_optional_gender_survives_library_round_trip(client, google_login):
+    token = google_login("gender-reader@example.com").json()["token"]
+    auth = {"Authorization": f"Bearer {token}"}
+    snapshot = client.get("/api/library", headers=auth).json()
+    birth = {**BIRTH, "gender": "female"}
+    item = {"id": "gender-example", "birth": birth, "savedAt": "2026-09-28T00:00:00Z"}
+    saved = client.put("/api/library", headers=auth, json={"revision": snapshot["revision"], "charts": [item]})
+    assert saved.status_code == 200
+    assert client.get("/api/library", headers=auth).json()["charts"][0]["birth"]["gender"] == "female"
+    assert client.post("/api/chart", headers=auth, json=birth).status_code == 200

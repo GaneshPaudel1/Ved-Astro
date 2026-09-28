@@ -25,9 +25,9 @@ export function writeLibrary(charts: SavedChart[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(charts))
 }
 
-export function ChartLibrary({ accountEmail, charts, activeId, busy, onNew, onLoad, onRename, onRemove }: {
+export function ChartLibrary({ accountEmail, charts, activeId, busy, onNew, onLoad, onReport, onRename, onRemove }: {
   accountEmail?: string; charts: SavedChart[]; activeId: string | null; busy: boolean
-  onNew: () => void; onLoad: (chart: SavedChart) => void
+  onReport: (id: string) => void; onNew: () => void; onLoad: (chart: SavedChart) => void
   onRename: (id: string, name: string) => void; onRemove: (id: string) => Promise<boolean>
 }) {
   const [query, setQuery] = useState('')
@@ -54,7 +54,7 @@ export function ChartLibrary({ accountEmail, charts, activeId, busy, onNew, onLo
           <label htmlFor={`rename-${chart.id}`}>Chart name</label><input id={`rename-${chart.id}`} value={name} onChange={e => setName(e.target.value)} maxLength={80} autoFocus required />
           <div className="cluster"><button className="btn btn--sm" disabled={busy || !name.trim()}>Save name</button><button type="button" className="btn btn--ghost btn--sm" onClick={() => setEditing(null)}>Cancel</button></div>
         </form> : <><h3>{chart.birth.name || 'Untitled chart'}</h3><p className="saved-chart__birth">{chart.birth.date} · {chart.birth.time?.slice(0, 5) || 'Time unknown'}</p><p className="saved-chart__place">{chart.birth.place}</p><div className="saved-chart__signs"><span>☾ {chart.bundle.chart.planets.Moon.sign_name}</span><span>✧ {chart.bundle.chart.ascendant_sign_name || 'Time unknown'}</span></div>
-          <div className="saved-chart__actions"><button className="btn btn--sm" onClick={() => onLoad(chart)} disabled={busy} aria-label={`Load ${chart.birth.name}`}>Open & edit ↗</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setEditing(chart.id); setName(chart.birth.name) }} aria-label={`Rename ${chart.birth.name}`}>Rename</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setDeleteError(''); setDeleting(chart) }} aria-label={`Remove ${chart.birth.name}`}>×</button></div></>}
+          <div className="saved-chart__actions"><button className="btn btn--sm" disabled={busy} onClick={() => onReport(chart.id)} aria-label={`Read report for ${chart.birth.name}`}>Report ↗</button><button className="btn btn--sm" onClick={() => onLoad(chart)} disabled={busy} aria-label={`Load ${chart.birth.name}`}>Open & edit ↗</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setEditing(chart.id); setName(chart.birth.name) }} aria-label={`Rename ${chart.birth.name}`}>Rename</button><button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => { setDeleteError(''); setDeleting(chart) }} aria-label={`Remove ${chart.birth.name}`}>×</button></div></>}
       </article>)}
       {!charts.length && <div className="library-empty"><span aria-hidden="true">✧</span><div><h3>Your people, written in the stars.</h3><p><strong>{accountEmail ? 'Create your first birth chart.' : 'Sign in with Google to create a birth chart.'}</strong> Keep your own chart and those of the people you love in one place.</p><p className="tiny dim">{accountEmail ? 'New charts save to your account. Use Import browser charts to copy an existing local collection.' : 'Already have browser charts? Sign in, then choose Import browser charts to keep them in your account.'}</p></div></div>}
       {charts.length > 0 && !filtered.length && <p className="muted">No charts match “{query}”. Try another name or place.</p>}

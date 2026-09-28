@@ -5,7 +5,7 @@ import './views.css'
 
 export function ChartView({ bundle, signNames }: { bundle: Bundle; signNames: string[] }) {
   const [style, setStyle] = useState<ChartStyle>('north')
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selected, setSelected] = useState<string | null>('Sun')
   const c = bundle.chart
 
   const placements = Object.values(c.planets).map((p) => ({
@@ -24,8 +24,8 @@ export function ChartView({ bundle, signNames }: { bundle: Bundle; signNames: st
   const active = selected ? c.planets[selected] : null
 
   return (
-    <div className="grid2">
-      <div className="stack">
+    <div className="kundali-overview">
+      <div className="stack kundali-figure">
         <div className="section__head">
           <span className="section__title">Rashi chart</span>
           <div className="segmented" role="group" aria-label="Chart style">
@@ -59,10 +59,11 @@ export function ChartView({ bundle, signNames }: { bundle: Bundle; signNames: st
 
         <ChartLegend />
 
-        {active && <PlanetDetail planet={active} bundle={bundle} onClose={() => setSelected(null)} />}
+
       </div>
 
-      <div className="stack">
+      <div className="kundali-insight"><p className="eyebrow">EXPLORE THE NINE GRAHAS</p><h2>A closer look at your sky.</h2><p>Select a planet in the chart or below to explore its placement.</p><div className="kundali-planet-picker">{Object.values(c.planets).map(p=><button key={p.name} aria-pressed={selected===p.name} onClick={()=>setSelected(p.name)}><span aria-hidden="true">{p.glyph}</span>{p.name}</button>)}</div>{active ? <PlanetDetail planet={active} bundle={bundle} onClose={()=>setSelected(null)}/> : <p>Select a planet to see its details.</p>}</div>
+      <details className="kundali-data"><summary>All planetary positions <span>Degrees, nakshatras & states</span></summary>
         <PlanetTable
           planets={c.planets}
           selected={selected}
@@ -70,8 +71,8 @@ export function ChartView({ bundle, signNames }: { bundle: Bundle; signNames: st
           timeKnown={c.time_known}
           vargottama={bundle.vargottama ?? []}
         />
-        {c.time_known && <HouseTable bundle={bundle} />}
-      </div>
+      </details>
+      {c.time_known && <details className="kundali-data"><summary>The twelve houses <span>Bhava placements & life themes</span></summary><HouseTable bundle={bundle} /></details>}
     </div>
   )
 }

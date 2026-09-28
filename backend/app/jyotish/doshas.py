@@ -215,11 +215,12 @@ def sade_sati(moon_sign: int, from_jd: float, to_jd: float,
                    "sign": prev_sign, "open_start": True}
 
     while jd < to_jd:
-        jd += step
+        previous_jd = jd
+        jd = min(jd + step, to_jd)
         sign = _saturn_sign_at(jd, ayanamsa)
         if sign == prev_sign:
             continue
-        boundary = _bisect_ingress(jd - step, jd, prev_sign, ayanamsa)
+        boundary = _bisect_ingress(previous_jd, jd, prev_sign, ayanamsa)
         if current is not None:
             current["end_jd"] = boundary
             spans.append(current)
@@ -239,6 +240,8 @@ def sade_sati(moon_sign: int, from_jd: float, to_jd: float,
         label, description = SADE_SATI_PHASES[s["phase_house"]]
         phases.append({
             "phase": label,
+            "open_start": s.get("open_start", False),
+            "open_end": s.get("open_end", False),
             "house_from_moon": s["phase_house"],
             "sign": s["sign"],
             "sign_name": K.SIGN_NAMES[s["sign"]],

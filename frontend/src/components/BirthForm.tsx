@@ -10,6 +10,7 @@ interface Props {
   reference: Reference | null
   busy?: boolean
   compact?: boolean
+  simple?: boolean
   submitLabel?: string
 }
 
@@ -20,7 +21,7 @@ interface Props {
  * option rather than something to fake with 12:00.
  */
 export function BirthForm({
-  value, onChange, onSubmit, reference, busy, compact, submitLabel = 'Cast chart',
+  value, onChange, onSubmit, reference, busy, compact, simple = false, submitLabel = 'Cast chart',
 }: Props) {
   const [timeUnknown, setTimeUnknown] = useState(value.time === null)
   const [tzInfo, setTzInfo] = useState<Awaited<ReturnType<typeof api.timezoneAt>> | null>(null)
@@ -45,6 +46,7 @@ export function BirthForm({
 
   const validate = (): boolean => {
     const e: Record<string, string> = {}
+    if (simple && !value.name.trim()) e.name = 'Enter a name.'
     if (!value.date) e.date = 'Enter a birth date.'
     else if (!/^\d{4}-\d{2}-\d{2}$/.test(value.date)) e.date = 'Use the date picker format.'
     if (!timeUnknown && !value.time) e.time = 'Enter a time, or mark it unknown.'
@@ -70,8 +72,11 @@ export function BirthForm({
           onChange={(e) => set('name', e.target.value)}
           placeholder="Whose chart is this?"
           autoComplete="name"
+          aria-invalid={!!errors.name}
         />
+        {errors.name && <p className="field__error">{errors.name}</p>}
       </div>
+      {simple && <div className="field"><label htmlFor="bf-gender">Gender <span className="muted">(optional)</span></label><select id="bf-gender" value={value.gender ?? ''} onChange={e => set('gender', e.target.value as BirthInput['gender'] || null)}><option value="">Select gender</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></div>}
 
       <div className="row row--2">
         <div className="field">
@@ -90,6 +95,7 @@ export function BirthForm({
 
         <div className="field">
           <label htmlFor="bf-time">Birth time</label>
+          {simple ? <BirthTime value={value.time} disabled={timeUnknown} onChange={time => set('time', time)} /> : <>
           <input
             id="bf-time"
             type="time"
@@ -99,6 +105,7 @@ export function BirthForm({
             onChange={(e) => set('time', e.target.value || null)}
             aria-invalid={!!errors.time}
           />
+          </>}
           <label className="bform__check">
             <input
               type="checkbox"
@@ -114,7 +121,7 @@ export function BirthForm({
         </div>
       </div>
 
-      {timeUnknown && (
+      {timeUnknown && !simple && (
         <div className="notice notice--warn" role="status">
           <span className="notice__mark">!</span>
           <span>
@@ -126,8 +133,11 @@ export function BirthForm({
         </div>
       )}
 
+      {simple && timeUnknown && <p className="field__hint">Without a birth time, some chart details will be unavailable.</p>}
       <PlaceField
+        simple={simple}
         value={value}
+        onQueryChange={simple ? place => onChange({ ...value, place, latitude: NaN, longitude: NaN }) : undefined}
         onPick={(g) =>
           onChange({
             ...value,
@@ -139,7 +149,7 @@ export function BirthForm({
         error={errors.place}
       />
 
-      {tzInfo && (
+      {tzInfo && !simple && (
         <div className={`bform__tz${tzInfo.pre_standard_time ? ' is-flagged' : ''}`}>
           <div className="bform__tz-row">
             <span className="dim tiny">Timezone at birth</span>
@@ -164,14 +174,14 @@ export function BirthForm({
         </div>
       )}
 
-      <button
+      {!simple && <button
         type="button"
         className="btn btn--ghost btn--sm bform__toggle"
         onClick={() => setShowAdvanced((v) => !v)}
         aria-expanded={showAdvanced}
       >
         {showAdvanced ? '− Hide' : '+ Show'} calculation settings
-      </button>
+      </button>}
 
       {showAdvanced && reference && (
         <div className="bform__advanced stack">
@@ -252,11 +262,13 @@ export function BirthForm({
 
 /* ------------------------------------------------------------ place lookup */
 function PlaceField({
-  value, onPick, error,
+  value, onPick, error, simple = false, onQueryChange,
 }: {
   value: BirthInput
   onPick: (g: GeoResult) => void
   error?: string
+  simple?: boolean
+  onQueryChange?: (place: string) => void
 }) {
   const [query, setQuery] = useState(value.place)
   const [results, setResults] = useState<GeoResult[]>([])
@@ -320,6 +332,7 @@ function PlaceField({
           placeholder="Start typing a town or city…"
           onChange={(e) => {
             setQuery(e.target.value)
+            onQueryChange?.(e.target.value)
             search(e.target.value)
           }}
           onFocus={() => results.length && setOpen(true)}
@@ -366,7 +379,7 @@ function PlaceField({
         )}
       </div>
 
-      <p className="field__hint">
+      {!simple && <p className="field__hint">
         {Number.isFinite(value.latitude) ? (
           <>
             Using <span className="mono">{value.latitude.toFixed(4)}</span>,{' '}
@@ -382,7 +395,7 @@ function PlaceField({
         >
           {manual ? 'Hide' : 'Enter coordinates directly'}
         </button>
-      </p>
+      </p>}
 
       {manual && (
         <div className="row row--2 bform__manual">
@@ -441,4 +454,20 @@ export function formatOffset(hours: number): string {
   return `UTC${sign}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}${
     s ? `:${String(s).padStart(2, '0')}` : ''
   }`
+}
+
+function BirthTime({ value, disabled, onChange }: { value: string | null; disabled: boolean; onChange: (time: string) => void }) {
+  const [hour, setHour] = useState(value ? String(Number(value.split(':')[0]) % 12 || 12) : '')
+  const [minute, setMinute] = useState(value ? value.split(':')[1] : '00')
+  const [period, setPeriod] = useState(value && Number(value.split(':')[0]) >= 12 ? 'PM' : 'AM')
+  useEffect(() => { if (value) { setHour(String(Number(value.split(':')[0]) % 12 || 12)); setMinute(value.split(':')[1]); setPeriod(Number(value.split(':')[0]) >= 12 ? 'PM' : 'AM') } }, [value])
+  const update = (h: string, m: string, p: string) => {
+    setHour(h); setMinute(m); setPeriod(p)
+    onChange(h ? `${String(Number(h) % 12 + (p === 'PM' ? 12 : 0)).padStart(2, '0')}:${m}:00` : '')
+  }
+  return <div className="birth-time-controls">
+    <select id="bf-time" aria-label="Birth hour" disabled={disabled} value={hour} onChange={e => update(e.target.value, minute, period)}><option value="">Hour</option>{Array.from({length:12}, (_,i) => <option key={i+1} value={i+1}>{i+1}</option>)}</select>
+    <select aria-label="Birth minute" disabled={disabled} value={minute} onChange={e => update(hour, e.target.value, period)}>{Array.from({length:60}, (_,i) => <option key={i} value={String(i).padStart(2,'0')}>{String(i).padStart(2,'0')}</option>)}</select>
+    <select aria-label="AM or PM" disabled={disabled} value={period} onChange={e => update(hour, minute, e.target.value)}><option>AM</option><option>PM</option></select>
+  </div>
 }

@@ -23,6 +23,7 @@ TimeStandard = Literal["auto", "zone", "lmt"]
 
 
 class BirthInput(BaseModel):
+    gender: Literal["female", "male", "other", "prefer_not_to_say"] | None = None
     name: str = Field(default="", max_length=160)
     date: str
     time: str | None = None

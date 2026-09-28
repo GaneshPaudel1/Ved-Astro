@@ -262,6 +262,28 @@ def test_sade_sati_watches_the_right_three_signs():
     assert {p["sign"] for p in r["phases"]} <= expected
 
 
+def test_sade_sati_preserves_clipped_boundaries(monkeypatch):
+    monkeypatch.setattr(doshas, "_saturn_sign_at", lambda jd, ayanamsa: 0)
+    result = doshas.sade_sati(0, 2451545.0, 2451550.0, now_jd=2451547.0)
+    phase = result["phases"][0]
+    assert phase["open_start"] is True
+    assert phase["open_end"] is True
+    assert phase["current"] is True
+    assert phase["end_jd"] == 2451550.0
+
+
+def test_sade_sati_does_not_scan_past_requested_window(monkeypatch):
+    samples = []
+    def sign(jd, ayanamsa):
+        samples.append(jd)
+        return 0 if jd < 2451552.0 else 1
+    monkeypatch.setattr(doshas, "_saturn_sign_at", sign)
+    result = doshas.sade_sati(0, 2451545.0, 2451550.0)
+    assert max(samples) <= 2451550.0
+    assert len(result["phases"]) == 1
+    assert result["phases"][0]["open_end"] is True
+
+
 def test_pitra_needs_two_indicators():
     asc = 0
     # Sun conjunct Rahu in the 9th: two indicators.

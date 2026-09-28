@@ -69,7 +69,7 @@ def reply(req: schemas.ChatRequest) -> str:
     model = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash").strip()
     if not re.fullmatch(r"[a-zA-Z0-9._-]+", model):
         raise HTTPException(503, "Chart chat model configuration is invalid.")
-    bundle = services.build_bundle(**req.birth.model_dump(),
+    bundle = services.build_bundle(**req.birth.model_dump(exclude={"gender"}),
                                    include={"aspects", "yogas", "dasha", "vargas"})
     chart = dict(bundle["chart"])
     chart.pop("moment", None)  # Do not send raw birth date, coordinates or identity.

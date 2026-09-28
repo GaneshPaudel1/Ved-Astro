@@ -204,6 +204,8 @@ export interface Doshas {
 }
 
 export interface SadeSatiPhase {
+  open_start?: boolean
+  open_end?: boolean
   phase: string
   house_from_moon: number
   sign: number
@@ -368,6 +370,7 @@ export interface Reference {
 }
 
 export interface BirthInput {
+  gender?: 'female' | 'male' | 'other' | 'prefer_not_to_say' | null
   name: string
   date: string
   time: string | null
